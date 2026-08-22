@@ -768,7 +768,9 @@ ipcMain.handle("updater:restart", () => {
 });
 ipcMain.handle("updater:check", () => {
   if (!app.isPackaged) return false;
-  autoUpdater.checkForUpdates().catch(() => {});
+autoUpdater.checkForUpdates().catch((err) => {
+  console.error("[Updater] Check failed:", err);
+});
   return true;
 });
 ipcMain.handle("updater:getState", () => lastUpdaterState);
@@ -874,6 +876,9 @@ function initAutoUpdate() {
       lastUpdaterState = payload;
       if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("updater:event", payload);
     };
+	autoUpdater.on("checking-for-update", () => {
+  emit({ state: "checking" });
+});
     autoUpdater.on("update-available", (i) => emit({ state: "available", version: i && i.version }));
     autoUpdater.on("update-not-available", () => emit({ state: "none" }));
     autoUpdater.on("download-progress", (p) => emit({ state: "downloading", percent: p ? Math.round(p.percent) : 0 }));
@@ -885,7 +890,11 @@ function initAutoUpdate() {
     });
     autoUpdater.on("error", (e) => emit({ state: "error", message: e && (e.message || String(e)) }));
     autoUpdater.checkForUpdates().catch(() => {});
-    setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 10 * 60 * 1000);
+setInterval(() => {
+  autoUpdater.checkForUpdates().catch((err) => {
+    console.error("[Updater] Scheduled check failed:", err);
+  });
+}, 10 * 60 * 1000);
   } catch {
   }
 }
