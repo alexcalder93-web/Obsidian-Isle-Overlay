@@ -12,6 +12,8 @@ export type OverlaySettings = {
   panels: Record<string, boolean> | null;
   theme: OverlayTheme;
   radarBounds: { x: number; y: number; width: number; height: number } | null;
+  mainWidth?: number;
+mainHeight?: number;
   radarSize: number;
   radarRange: number;
   radarLabels: boolean;

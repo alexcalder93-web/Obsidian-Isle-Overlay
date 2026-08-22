@@ -3595,3 +3595,104 @@ select:focus {
     scroll-behavior: auto !important;
   }
 }
+/* ==========================================================================
+   V0.3.7 - PAGE DROPDOWN
+   ========================================================================== */
+
+.pageDropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 135px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--edge);
+  background: rgba(8, 8, 10, 0.82);
+  border-radius: 5px;
+  color: var(--phos);
+  flex-shrink: 0;
+}
+
+.pageDropdownIcon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.pageSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  width: 100%;
+  padding: 0 17px 0 0;
+}
+
+.pageSelect option {
+  background: #090a0c;
+  color: #f1f1f1;
+}
+
+.pageDropdownArrow {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+/* ==========================================================================
+   MAIN DASHBOARD RESIZING
+   ========================================================================== */
+
+.mainWin {
+  min-width: 560px;
+  min-height: 420px;
+  max-width: 1200px;
+  max-height: 900px;
+  overflow: hidden;
+}
+
+.mainResizeHandle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  z-index: 1000;
+}
+
+.mainResizeHandle::before {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 12px;
+  height: 12px;
+  background:
+    linear-gradient(
+      135deg,
+      transparent 45%,
+      var(--phos) 46%,
+      var(--phos) 52%,
+      transparent 53%
+    ),
+    linear-gradient(
+      135deg,
+      transparent 58%,
+      var(--phos) 59%,
+      var(--phos) 65%,
+      transparent 66%
+    );
+  opacity: 0.7;
+}

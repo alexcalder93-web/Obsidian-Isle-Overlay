@@ -9,7 +9,15 @@ import { MapEditorTab } from "./MapEditorTab";
 import { AdminTab } from "./AdminTab";
 import type { OverlaySettings, OverlayTheme, PlayerMe } from "./preload";
 
-export type TabKey = "profile" | "livemap" | "skin" | "garage" | "mapedit" | "dinoshop" | "skinshop" | "admin";
+export type TabKey =
+  | "profile"
+  | "livemap"
+  | "skin"
+  | "garage"
+  | "mapedit"
+  | "dinoshop"
+  | "skinshop"
+  | "admin";
 
 const TABS: { key: TabKey; label: string; ready?: boolean }[] = [
   { key: "profile", label: "Dashboard", ready: true },
@@ -23,6 +31,17 @@ const TABS: { key: TabKey; label: string; ready?: boolean }[] = [
 ];
 
 type Pos = { x: number; y: number };
+type Size = { width: number; height: number };
+
+const DEFAULT_SIZE: Size = {
+  width: 720,
+  height: 620,
+};
+
+const MIN_SIZE: Size = {
+  width: 520,
+  height: 420,
+};
 
 const TAB_ICONS: Record<TabKey, ReactNode> = {
   profile: (
@@ -82,7 +101,9 @@ const TAB_ICONS: Record<TabKey, ReactNode> = {
 };
 
 const STAT_ICONS: Record<string, ReactNode> = {
-  health: <path d="M12 20.5s-7-4.2-9.2-8.3C1.3 9 2.7 5.6 6 5.6c2 0 3.2 1.2 4 2.6.8-1.4 2-2.6 4-2.6 3.3 0 4.7 3.4 3.2 6.6C19 16.3 12 20.5 12 20.5Z" />,
+  health: (
+    <path d="M12 20.5s-7-4.2-9.2-8.3C1.3 9 2.7 5.6 6 5.6c2 0 3.2 1.2 4 2.6.8-1.4 2-2.6 4-2.6 3.3 0 4.7 3.4 3.2 6.6C19 16.3 12 20.5 12 20.5Z" />
+  ),
   stamina: <path d="M13 2 4 13.5h6L9 22l9-11.5h-6L13 2Z" />,
   hunger: (
     <>
@@ -119,6 +140,7 @@ function TabIcon({ name }: { name: TabKey }) {
 
 export function StatGlyph({ name }: { name: string }) {
   const fill = name === "health" || name === "thirst";
+
   return (
     <svg
       viewBox="0 0 24 24"
@@ -153,8 +175,14 @@ function VitalBar({
 }) {
   const v = typeof value === "number" ? value : null;
   const m = typeof max === "number" && max > 0 ? max : null;
-  const pct = v != null && m != null ? Math.max(0, Math.min(100, (v / m) * 100)) : null;
-  const shown = pct != null ? Math.round(pct) : v != null ? Math.round(v) : null;
+  const pct =
+    v != null && m != null
+      ? Math.max(0, Math.min(100, (v / m) * 100))
+      : null;
+
+  const shown =
+    pct != null ? Math.round(pct) : v != null ? Math.round(v) : null;
+
   return (
     <div className="vital" style={{ ["--c" as string]: color }}>
       <div className="vitalHead">
@@ -162,26 +190,47 @@ function VitalBar({
           <StatGlyph name={icon} />
         </span>
         <span className="vitalName">{label}</span>
-        <span className="vitalVal">{shown != null ? `${shown}${suffix}` : "—"}</span>
+        <span className="vitalVal">
+          {shown != null ? `${shown}${suffix}` : "—"}
+        </span>
       </div>
+
       <div className="vitalTrack">
-        <div className="vitalFill" style={{ width: pct != null ? `${pct}%` : "0%" }} />
+        <div
+          className="vitalFill"
+          style={{ width: pct != null ? `${pct}%` : "0%" }}
+        />
       </div>
     </div>
   );
 }
 
-function NutBar({ label, value, color }: { label: string; value?: number | null; color: string }) {
+function NutBar({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value?: number | null;
+  color: string;
+}) {
   const v = typeof value === "number" ? value : null;
   const pct = v != null ? Math.max(4, Math.min(100, (v / 5000) * 100)) : null;
+
   return (
     <div className="vital" style={{ ["--c" as string]: color }}>
       <div className="vitalHead">
         <span className="vitalName">{label}</span>
-        <span className="vitalVal mono">{v != null ? v.toFixed(1) : "—"}</span>
+        <span className="vitalVal mono">
+          {v != null ? v.toFixed(1) : "—"}
+        </span>
       </div>
+
       <div className="vitalTrack">
-        <div className="vitalFill" style={{ width: pct != null ? `${pct}%` : "0%" }} />
+        <div
+          className="vitalFill"
+          style={{ width: pct != null ? `${pct}%` : "0%" }}
+        />
       </div>
     </div>
   );
@@ -204,8 +253,15 @@ function MiniStat({
 }) {
   const v = typeof value === "number" ? value : null;
   const m = typeof max === "number" && max > 0 ? max : null;
-  const pct = v != null && m != null ? Math.max(0, Math.min(100, (v / m) * 100)) : null;
-  const shown = pct != null ? Math.round(pct) : v != null ? Math.round(v) : null;
+
+  const pct =
+    v != null && m != null
+      ? Math.max(0, Math.min(100, (v / m) * 100))
+      : null;
+
+  const shown =
+    pct != null ? Math.round(pct) : v != null ? Math.round(v) : null;
+
   return (
     <div className="miniStat" style={{ ["--c" as string]: color }}>
       <div className="hudTop">
@@ -213,31 +269,83 @@ function MiniStat({
           <StatGlyph name={icon} />
         </span>
         <span className="hudLabel">{label}</span>
-        <span className="hudVal">{shown != null ? `${shown}${suffix}` : "—"}</span>
+        <span className="hudVal">
+          {shown != null ? `${shown}${suffix}` : "—"}
+        </span>
       </div>
+
       <div className="vitalTrack">
-        <div className="vitalFill" style={{ width: pct != null ? `${pct}%` : "0%" }} />
+        <div
+          className="vitalFill"
+          style={{ width: pct != null ? `${pct}%` : "0%" }}
+        />
       </div>
     </div>
   );
 }
 
-export function StatsWidget({ me, theme }: { me: PlayerMe | null; theme: OverlayTheme }) {
+export function StatsWidget({
+  me,
+  theme,
+}: {
+  me: PlayerMe | null;
+  theme: OverlayTheme;
+}) {
   return (
     <div className="hud statsWidget dragHandle">
       <div className="hudTitle">
-        <span className="hudTitleName">{me?.hasData && me.species ? me.species : "Stats"}</span>
+        <span className="hudTitleName">
+          {me?.hasData && me.species ? me.species : "Stats"}
+        </span>
+
         {me?.growth != null ? (
-          <span className="hudTitleBadge">{Math.round(me.growth * 100)}%</span>
+          <span className="hudTitleBadge">
+            {Math.round(me.growth * 100)}%
+          </span>
         ) : null}
       </div>
+
       {me?.hasData ? (
         <>
-          <MiniStat icon="health" label="Health" value={me.health} max={me.maxHealth} color={theme.stat.health} />
-          <MiniStat icon="stamina" label="Stamina" value={me.stamina} max={me.maxStamina} color={theme.stat.stamina} />
-          <MiniStat icon="hunger" label="Hunger" value={me.hunger} max={me.maxHunger} color={theme.stat.food} />
-          <MiniStat icon="thirst" label="Thirst" value={me.thirst} max={me.maxThirst} color={theme.stat.water} />
-          <MiniStat icon="growth" label="Growth" value={me.growth != null ? me.growth * 100 : null} max={100} color="#4ade80" />
+          <MiniStat
+            icon="health"
+            label="Health"
+            value={me.health}
+            max={me.maxHealth}
+            color={theme.stat.health}
+          />
+
+          <MiniStat
+            icon="stamina"
+            label="Stamina"
+            value={me.stamina}
+            max={me.maxStamina}
+            color={theme.stat.stamina}
+          />
+
+          <MiniStat
+            icon="hunger"
+            label="Hunger"
+            value={me.hunger}
+            max={me.maxHunger}
+            color={theme.stat.food}
+          />
+
+          <MiniStat
+            icon="thirst"
+            label="Thirst"
+            value={me.thirst}
+            max={me.maxThirst}
+            color={theme.stat.water}
+          />
+
+          <MiniStat
+            icon="growth"
+            label="Growth"
+            value={me.growth != null ? me.growth * 100 : null}
+            max={100}
+            color="#4ade80"
+          />
         </>
       ) : (
         <div className="hudEmpty">no live dino</div>
@@ -246,30 +354,60 @@ export function StatsWidget({ me, theme }: { me: PlayerMe | null; theme: Overlay
   );
 }
 
-const HEX_D = "M26 3 L74 3 L98 44 L74 85 L26 85 L2 44 Z";
+const HEX_D =
+  "M26 3 L74 3 L98 44 L74 85 L26 85 L2 44 Z";
+
 const HEART_D =
   "M50 68 C 30 52 22 43 22 33 C 22 25 28 20 35 20 C 41 20 46 24 50 30 C 54 24 59 20 65 20 C 72 20 78 25 78 33 C 78 43 70 52 50 68 Z";
+
 const HEART_TOP = 20;
 const HEART_BOTTOM = 68;
 
 export function HeartHud({ me }: { me: PlayerMe | null }) {
   const v = typeof me?.health === "number" ? me.health : null;
-  const m = typeof me?.maxHealth === "number" && me.maxHealth > 0 ? me.maxHealth : null;
-  const pct = v != null && m != null ? Math.max(0, Math.min(1, v / m)) : 0;
-  const fillY = HEART_BOTTOM - pct * (HEART_BOTTOM - HEART_TOP);
+  const m =
+    typeof me?.maxHealth === "number" && me.maxHealth > 0
+      ? me.maxHealth
+      : null;
+
+  const pct =
+    v != null && m != null
+      ? Math.max(0, Math.min(1, v / m))
+      : 0;
+
+  const fillY =
+    HEART_BOTTOM - pct * (HEART_BOTTOM - HEART_TOP);
+
   return (
-    <div className="heartHud" title={`Health ${Math.round(pct * 100)}%`}>
+    <div
+      className="heartHud"
+      title={`Health ${Math.round(pct * 100)}%`}
+    >
       <svg viewBox="0 0 100 88" aria-hidden="true">
         <defs>
           <clipPath id="heartClip">
             <path d={HEART_D} />
           </clipPath>
         </defs>
-        <path className="hexOuter" d={HEX_D} transform="rotate(30 50 44)" />
+
+        <path
+          className="hexOuter"
+          d={HEX_D}
+          transform="rotate(30 50 44)"
+        />
+
         <path className="heartBase" d={HEART_D} />
+
         <g clipPath="url(#heartClip)">
-          <rect className="heartFill" x="0" y={fillY} width="100" height="88" />
+          <rect
+            className="heartFill"
+            x="0"
+            y={fillY}
+            width="100"
+            height="88"
+          />
         </g>
+
         <path className="heartLine" d={HEART_D} />
       </svg>
     </div>
@@ -278,10 +416,13 @@ export function HeartHud({ me }: { me: PlayerMe | null }) {
 
 function dinoStage(me: PlayerMe): string {
   if (me.prime?.elder) return "Prime Elder";
+
   const g = me.growth ?? 0;
+
   if (g >= 0.99) return "Adult";
   if (g >= 0.5) return "Sub-Adult";
   if (g >= 0.25) return "Juvenile";
+
   return "Hatchling";
 }
 
@@ -299,29 +440,66 @@ function DashboardTab({
   supportOn: boolean;
 }) {
   const supportBtn = supportOn ? (
-    <button className="supportBtn interactive-region" onClick={() => onGoto("admin")}>
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <button
+      className="supportBtn interactive-region"
+      onClick={() => onGoto("admin")}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="15"
+        height="15"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
       </svg>
       Support
     </button>
   ) : null;
+
   if (!me?.hasData) {
     return (
       <div className="noData">
-        <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          width="42"
+          height="42"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <path d="M12 2 21 7v10l-9 5-9-5V7l9-5Z" />
           <path d="M12 12 21 7M12 12v10M12 12 3 7" />
         </svg>
+
         <div className="noDataTtl">No live dino</div>
-        <div className="noDataSub">Spawn in on a server running the IslePilot plugin to see your stats.</div>
+
+        <div className="noDataSub">
+          Spawn in on a server running the IslePilot plugin to see your stats.
+        </div>
+
         {supportBtn}
       </div>
     );
   }
+
   const p = me.prime;
-  const primePct = p ? Math.max(0, Math.min(100, (p.done / Math.max(1, p.required)) * 100)) : 0;
-  const initial = (me.species ?? "?").slice(0, 1).toUpperCase();
+
+  const primePct = p
+    ? Math.max(
+        0,
+        Math.min(100, (p.done / Math.max(1, p.required)) * 100),
+      )
+    : 0;
+
+  const initial = (me.species ?? "?")
+    .slice(0, 1)
+    .toUpperCase();
 
   return (
     <div className="dash">
@@ -329,21 +507,32 @@ function DashboardTab({
         <div className="avatar">
           <span className="avatarInitial">{initial}</span>
         </div>
+
         <div className="idMeta">
           <div className="dinoLine">
-            <span className="dinoName">{me.species ?? "Unknown"}</span>
+            <span className="dinoName">
+              {me.species ?? "Unknown"}
+            </span>
+
             {me.female != null ? (
-              <span className={`gender ${me.female ? "f" : "m"}`}>{me.female ? "♀" : "♂"}</span>
+              <span
+                className={`gender ${me.female ? "f" : "m"}`}
+              >
+                {me.female ? "♀" : "♂"}
+              </span>
             ) : null}
           </div>
+
           <div className="idRow">
             <span className="idKey">Stage</span>
             <span className="idVal">{dinoStage(me)}</span>
           </div>
+
           <div className="idRow">
             <span className="idKey">Server</span>
             <span className="idVal">{me.server ?? "—"}</span>
           </div>
+
           <div className="idRow">
             <span className="idKey">SteamID</span>
             <span className="idVal mono">{me.steamId}</span>
@@ -354,21 +543,71 @@ function DashboardTab({
       {supportBtn}
 
       <div className="sectionHead">Vitals</div>
+
       <div className="vGrid">
-        <VitalBar icon="health" label="Health" value={me.health} max={me.maxHealth} color={theme.stat.health} />
-        <VitalBar icon="hunger" label="Hunger" value={me.hunger} max={me.maxHunger} color={theme.stat.food} />
-        <VitalBar icon="thirst" label="Thirst" value={me.thirst} max={me.maxThirst} color={theme.stat.water} />
-        <VitalBar icon="stamina" label="Stamina" value={me.stamina} max={me.maxStamina} color={theme.stat.stamina} />
-        <VitalBar icon="growth" label="Growth" value={me.growth != null ? me.growth * 100 : null} max={100} color={GROWTH_COLOR} />
+        <VitalBar
+          icon="health"
+          label="Health"
+          value={me.health}
+          max={me.maxHealth}
+          color={theme.stat.health}
+        />
+
+        <VitalBar
+          icon="hunger"
+          label="Hunger"
+          value={me.hunger}
+          max={me.maxHunger}
+          color={theme.stat.food}
+        />
+
+        <VitalBar
+          icon="thirst"
+          label="Thirst"
+          value={me.thirst}
+          max={me.maxThirst}
+          color={theme.stat.water}
+        />
+
+        <VitalBar
+          icon="stamina"
+          label="Stamina"
+          value={me.stamina}
+          max={me.maxStamina}
+          color={theme.stat.stamina}
+        />
+
+        <VitalBar
+          icon="growth"
+          label="Growth"
+          value={me.growth != null ? me.growth * 100 : null}
+          max={100}
+          color={GROWTH_COLOR}
+        />
       </div>
 
       {me.nutrition ? (
         <>
           <div className="sectionHead">Nutrition</div>
+
           <div className="vGrid nut">
-            <NutBar label="Carb" value={me.nutrition.carb} color="#e0a94b" />
-            <NutBar label="Protein" value={me.nutrition.protein} color="#66c26a" />
-            <NutBar label="Lipid" value={me.nutrition.lipid} color="#d7b35a" />
+            <NutBar
+              label="Carb"
+              value={me.nutrition.carb}
+              color="#e0a94b"
+            />
+
+            <NutBar
+              label="Protein"
+              value={me.nutrition.protein}
+              color="#66c26a"
+            />
+
+            <NutBar
+              label="Lipid"
+              value={me.nutrition.lipid}
+              color="#d7b35a"
+            />
           </div>
         </>
       ) : null}
@@ -377,22 +616,32 @@ function DashboardTab({
         <>
           <div className="sectionHead">
             Prime Conditions
+
             <span className="sectionCount">
               {p.done}/{p.required}
             </span>
           </div>
+
           <div className="primeWrap">
             <div className="primeTrack">
-              <div className="primeFill" style={{ width: `${primePct}%` }} />
+              <div
+                className="primeFill"
+                style={{ width: `${primePct}%` }}
+              />
             </div>
+
             {p.elder ? (
               <div className="primeElder">
-                <CheckMark done /> Prime Elder reached
+                <CheckMark done />
+                Prime Elder reached
               </div>
             ) : (
               <ul className="condList">
                 {p.quests.map((q, i) => (
-                  <li key={i} className={q.done ? "condDone" : "condOpen"}>
+                  <li
+                    key={i}
+                    className={q.done ? "condDone" : "condOpen"}
+                  >
                     <CheckMark done={q.done} />
                     <span>{q.name}</span>
                   </li>
@@ -404,11 +653,19 @@ function DashboardTab({
       ) : null}
 
       <div className="sectionHead">Add-ons</div>
+
       <div className="addons">
-        <button className="addon" onClick={() => onGoto("livemap")}>
+        <button
+          className="addon"
+          onClick={() => onGoto("livemap")}
+        >
           <TabIcon name="livemap" /> Live Map
         </button>
-        <button className="addon" onClick={() => onGoto("skin")}>
+
+        <button
+          className="addon"
+          onClick={() => onGoto("skin")}
+        >
           <TabIcon name="skin" /> Skin Editor
         </button>
       </div>
@@ -418,11 +675,84 @@ function DashboardTab({
 
 function CheckMark({ done }: { done: boolean }) {
   return (
-    <span className={`mark ${done ? "ok" : "no"}`} aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-        {done ? <path d="m5 12 5 5 9-10" /> : <path d="M6 6l12 12M18 6 6 18" />}
+    <span
+      className={`mark ${done ? "ok" : "no"}`}
+      aria-hidden="true"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="13"
+        height="13"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {done ? (
+          <path d="m5 12 5 5 9-10" />
+        ) : (
+          <path d="M6 6l12 12M18 6 6 18" />
+        )}
       </svg>
     </span>
+  );
+}
+
+function PageDropdown({
+  tab,
+  availableTabs,
+  onChange,
+}: {
+  tab: TabKey;
+  availableTabs: typeof TABS;
+  onChange: (tab: TabKey) => void;
+}) {
+  return (
+    <div className="pageDropdown">
+      <svg
+        className="pageDropdownIcon"
+        viewBox="0 0 24 24"
+        width="15"
+        height="15"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {TAB_ICONS[tab]}
+      </svg>
+
+      <select
+        className="pageSelect"
+        value={tab}
+        onChange={(e) => onChange(e.target.value as TabKey)}
+        aria-label="Select page"
+      >
+        {availableTabs.map((t) => (
+          <option key={t.key} value={t.key}>
+            {t.label}
+          </option>
+        ))}
+      </select>
+
+      <svg
+        className="pageDropdownArrow"
+        viewBox="0 0 24 24"
+        width="12"
+        height="12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    </div>
   );
 }
 
@@ -452,26 +782,126 @@ export function MainWindow({
   const [tab, setTab] = useState<TabKey>("profile");
   const [mapEditAdmin, setMapEditAdmin] = useState(false);
   const [adminModeOn, setAdminModeOn] = useState(false);
-  const saved = (settings?.layout as Record<string, Pos> | null | undefined)?.["main"];
+
+  const savedLayout =
+    settings?.layout as
+      | Record<string, Pos | Size>
+      | null
+      | undefined;
+
+  const saved = savedLayout?.["main"];
+
+  const savedPos =
+    saved &&
+    "x" in saved &&
+    typeof saved.x === "number"
+      ? {
+          x: saved.x,
+          y: typeof saved.y === "number" ? saved.y : 70,
+        }
+      : { x: 140, y: 70 };
+
+  const savedSize =
+    saved &&
+    "width" in saved &&
+    typeof saved.width === "number"
+      ? {
+          width: saved.width,
+          height:
+            typeof saved.height === "number"
+              ? saved.height
+              : DEFAULT_SIZE.height,
+        }
+      : DEFAULT_SIZE;
+
+  const [pos, setPos] = useState<Pos>(savedPos);
+  const [size, setSize] = useState<Size>(savedSize);
+  const [size, setSize] = useState({
+  width: settings?.mainWidth ?? 720,
+  height: settings?.mainHeight ?? 620,
+});
+
+  const off = useRef<Pos | null>(null);
+  const resizeStart = useRef<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (
+      saved &&
+      "x" in saved &&
+      typeof saved.x === "number"
+    ) {
+      setPos({
+        x: saved.x,
+        y:
+          typeof saved.y === "number"
+            ? saved.y
+            : 70,
+      });
+    }
+	useEffect(() => {
+  if (
+    typeof settings?.mainWidth === "number" &&
+    typeof settings?.mainHeight === "number"
+  ) {
+    setSize({
+      width: settings.mainWidth,
+      height: settings.mainHeight,
+    });
+  }
+}, [settings?.mainWidth, settings?.mainHeight]);
+
+    if (
+      saved &&
+      "width" in saved &&
+      typeof saved.width === "number"
+    ) {
+      setSize({
+        width: Math.max(MIN_SIZE.width, saved.width),
+        height:
+          typeof saved.height === "number"
+            ? Math.max(MIN_SIZE.height, saved.height)
+            : DEFAULT_SIZE.height,
+      });
+    }
+  }, [
+    saved && "x" in saved ? saved.x : undefined,
+    saved && "y" in saved ? saved.y : undefined,
+    saved && "width" in saved ? saved.width : undefined,
+    saved && "height" in saved ? saved.height : undefined,
+  ]);
 
   useEffect(() => {
     if (!authed) {
       setMapEditAdmin(false);
       return;
     }
+
     let alive = true;
+
     const check = async () => {
       try {
-        const r = (await window.isleOverlay.apiGet("/api/overlay/mapedit/access")) as
-          | { admin?: boolean }
-          | null;
-        if (alive) setMapEditAdmin(r?.admin === true);
+        const r =
+          (await window.isleOverlay.apiGet(
+            "/api/overlay/mapedit/access",
+          )) as { admin?: boolean } | null;
+
+        if (alive) {
+          setMapEditAdmin(r?.admin === true);
+        }
       } catch {
         if (alive) setMapEditAdmin(false);
       }
     };
+
     void check();
+
     const iv = setInterval(check, 10000);
+
     return () => {
       alive = false;
       clearInterval(iv);
@@ -483,19 +913,28 @@ export function MainWindow({
       setAdminModeOn(false);
       return;
     }
+
     let alive = true;
+
     const check = async () => {
       try {
-        const r = (await window.isleOverlay.apiGet("/api/overlay/admin/access")) as
-          | { enabled?: boolean }
-          | null;
-        if (alive) setAdminModeOn(r?.enabled === true);
+        const r =
+          (await window.isleOverlay.apiGet(
+            "/api/overlay/admin/access",
+          )) as { enabled?: boolean } | null;
+
+        if (alive) {
+          setAdminModeOn(r?.enabled === true);
+        }
       } catch {
         if (alive) setAdminModeOn(false);
       }
     };
+
     void check();
+
     const iv = setInterval(check, 15000);
+
     return () => {
       alive = false;
       clearInterval(iv);
@@ -503,165 +942,452 @@ export function MainWindow({
   }, [authed, me?.hasData]);
 
   useEffect(() => {
-    if (tab === "mapedit" && !mapEditAdmin) setTab("profile");
-    if (tab === "admin" && !adminModeOn) setTab("profile");
+    if (tab === "mapedit" && !mapEditAdmin) {
+      setTab("profile");
+    }
+
+    if (tab === "admin" && !adminModeOn) {
+      setTab("profile");
+    }
   }, [tab, mapEditAdmin, adminModeOn]);
 
   useEffect(() => {
-    if (focusSupportSignal > 0) setTab("admin");
+    if (focusSupportSignal > 0) {
+      setTab("admin");
+    }
   }, [focusSupportSignal]);
-  const [pos, setPos] = useState<Pos>(saved && typeof saved.x === "number" ? saved : { x: 140, y: 70 });
-  const off = useRef<Pos | null>(null);
 
-  useEffect(() => {
-    if (saved && typeof saved.x === "number") setPos(saved);
-  }, [saved?.x, saved?.y]);
+  const availableTabs = TABS.filter(
+    (t) =>
+      (t.key !== "mapedit" || mapEditAdmin) &&
+      (t.key !== "admin" || adminModeOn),
+  );
+
+  const saveLayout = (
+    newPos: Pos,
+    newSize: Size,
+  ) => {
+    void window.isleOverlay.getSettings().then((s) => {
+      void window.isleOverlay.setSettings({
+        layout: {
+          ...(s.layout || {}),
+          main: {
+            ...newPos,
+            ...newSize,
+          },
+        },
+      });
+    });
+  };
 
   const onDown = (e: React.MouseEvent) => {
-    if (!(e.target as HTMLElement).closest(".dragHandle")) return;
+    if (
+      !(e.target as HTMLElement).closest(".dragHandle")
+    ) {
+      return;
+    }
+
     e.preventDefault();
-    off.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+
+    off.current = {
+      x: e.clientX - pos.x,
+      y: e.clientY - pos.y,
+    };
+
     lockInteract();
+
     const move = (ev: MouseEvent) => {
       if (!off.current) return;
+
       setPos({
-        x: Math.max(0, Math.min(window.innerWidth - 160, ev.clientX - off.current.x)),
-        y: Math.max(0, Math.min(window.innerHeight - 46, ev.clientY - off.current.y)),
+        x: Math.max(
+          0,
+          Math.min(
+            window.innerWidth - 160,
+            ev.clientX - off.current.x,
+          ),
+        ),
+        y: Math.max(
+          0,
+          Math.min(
+            window.innerHeight - 46,
+            ev.clientY - off.current.y,
+          ),
+        ),
       });
     };
+
     const up = () => {
       window.removeEventListener("mousemove", move);
       window.removeEventListener("mouseup", up);
+
       off.current = null;
       unlockInteract();
+
       setPos((cur) => {
-        void window.isleOverlay.getSettings().then((s) => {
-          void window.isleOverlay.setSettings({ layout: { ...(s.layout || {}), main: cur } });
-        });
+        saveLayout(cur, size);
         return cur;
       });
     };
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+  const onResizeDown = (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startWidth = size.width;
+  const startHeight = size.height;
+
+  lockInteract();
+
+  const move = (ev: MouseEvent) => {
+    const newWidth = Math.max(
+      560,
+      Math.min(1200, startWidth + (ev.clientX - startX))
+    );
+
+    const newHeight = Math.max(
+      420,
+      Math.min(900, startHeight + (ev.clientY - startY))
+    );
+
+    setSize({
+      width: newWidth,
+      height: newHeight,
+    });
+  };
+
+  const up = () => {
+    window.removeEventListener("mousemove", move);
+    window.removeEventListener("mouseup", up);
+    unlockInteract();
+
+    setSize((current) => {
+      void window.isleOverlay.setSettings({
+        mainWidth: current.width,
+        mainHeight: current.height,
+      });
+
+      return current;
+    });
+  };
+
+  window.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", up);
+};
+
+  const onResizeDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    resizeStart.current = {
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height,
+    };
+
+    lockInteract();
+
+    const move = (ev: MouseEvent) => {
+      const start = resizeStart.current;
+
+      if (!start) return;
+
+      const nextWidth = Math.max(
+        MIN_SIZE.width,
+        Math.min(
+          window.innerWidth - pos.x,
+          start.width + (ev.clientX - start.x),
+        ),
+      );
+
+      const nextHeight = Math.max(
+        MIN_SIZE.height,
+        Math.min(
+          window.innerHeight - pos.y,
+          start.height + (ev.clientY - start.y),
+        ),
+      );
+
+      setSize({
+        width: nextWidth,
+        height: nextHeight,
+      });
+    };
+
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+
+      resizeStart.current = null;
+      unlockInteract();
+
+      setSize((cur) => {
+        saveLayout(pos, cur);
+        return cur;
+      });
+    };
+
     window.addEventListener("mousemove", move);
     window.addEventListener("mouseup", up);
   };
 
   const holdInteract = () => {
-    if (!isInteractLocked()) void window.isleOverlay.setMouseIgnore(false);
+    if (!isInteractLocked()) {
+      void window.isleOverlay.setMouseIgnore(false);
+    }
   };
 
   const statusText = me?.hasData
-    ? `${me.species ?? "Unknown"}${me.growth != null ? ` · ${Math.round(me.growth * 100)}%` : ""}`
+    ? `${me.species ?? "Unknown"}${
+        me.growth != null
+          ? ` · ${Math.round(me.growth * 100)}%`
+          : ""
+      }`
     : authed
-    ? "not in game"
-    : "signed out";
+      ? "not in game"
+      : "signed out";
 
   return (
-    <div
-      className="mainWin interactive-region"
-      style={{ left: pos.x, top: pos.y }}
-      onMouseDown={onDown}
-      onMouseMove={holdInteract}
-    >
+<div
+  className="mainWin interactive-region"
+  style={{
+    left: pos.x,
+    top: pos.y,
+    width: size.width,
+    height: size.height,
+  }}
+  onMouseDown={onDown}
+  onMouseMove={holdInteract}
+>
       <div className="topbar dragHandle">
         <span className="brand">
-          <svg className="brandMark" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path d="M12 2 21 7v10l-9 5-9-5V7l9-5Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-            <path d="M12 7 16 9.5v5L12 17l-4-2.5v-5L12 7Z" fill="currentColor" />
+          <svg
+            className="brandMark"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2 21 7v10l-9 5-9-5V7l9-5Z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 7 16 9.5v5L12 17l-4-2.5v-5L12 7Z"
+              fill="currentColor"
+            />
           </svg>
-          <span className="brandName">TheObsidianIsle</span>
+
+          <span className="brandName">
+            TheObsidianIsle
+          </span>
+
           <span className="brandSep">/</span>
-          <span className="brandCtx">{TABS.find((t) => t.key === tab)?.label ?? "Dashboard"}</span>
         </span>
+
+        <PageDropdown
+          tab={tab}
+          availableTabs={availableTabs}
+          onChange={setTab}
+        />
+
         <span className="topStatus">
-          <span className={`liveDot ${me?.hasData ? "on" : ""}`} />
+          <span
+            className={`liveDot ${
+              me?.hasData ? "on" : ""
+            }`}
+          />
           {statusText}
         </span>
+
         {ticketUnread > 0 ? (
           <button
-            className={`envelopeBtn interactive-region ${ticketUrgent ? "urgent" : ""}`}
-            title={`${ticketUnread} unread ticket ${ticketUnread === 1 ? "message" : "messages"}`}
+            className={`envelopeBtn interactive-region ${
+              ticketUrgent ? "urgent" : ""
+            }`}
+            title={`${ticketUnread} unread ticket ${
+              ticketUnread === 1
+                ? "message"
+                : "messages"
+            }`}
             onClick={() => setTab("admin")}
           >
-            ✉<span className="envelopeCount">{ticketUnread}</span>
+            ✉
+            <span className="envelopeCount">
+              {ticketUnread}
+            </span>
           </button>
         ) : null}
-        <span className="topVer">v{__APP_VERSION__}</span>
-        <button className="iconBtn" onClick={onSettings} title="settings" aria-label="Settings">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+
+        <span className="topVer">
+          v{__APP_VERSION__}
+        </span>
+
+        <button
+          className="iconBtn"
+          onClick={onSettings}
+          title="settings"
+          aria-label="Settings"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="15"
+            height="15"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
           </svg>
         </button>
-        <button className="iconBtn danger" onClick={onClose} title="hide dashboard" aria-label="Hide dashboard">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+
+        <button
+          className="iconBtn danger"
+          onClick={onClose}
+          title="hide dashboard"
+          aria-label="Hide dashboard"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="14"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          >
             <path d="M6 6 18 18M18 6 6 18" />
           </svg>
         </button>
+		<div
+  className="mainResizeHandle"
+  onMouseDown={onResizeDown}
+/>
       </div>
 
       {!authed ? (
         <div className="gate">
-          <svg className="gateMark" viewBox="0 0 24 24" width="48" height="48" aria-hidden="true">
-            <path d="M12 2 21 7v10l-9 5-9-5V7l9-5Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-            <path d="M12 7 16 9.5v5L12 17l-4-2.5v-5L12 7Z" fill="currentColor" opacity="0.9" />
+          <svg
+            className="gateMark"
+            viewBox="0 0 24 24"
+            width="48"
+            height="48"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2 21 7v10l-9 5-9-5V7l9-5Z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 7 16 9.5v5L12 17l-4-2.5v-5L12 7Z"
+              fill="currentColor"
+              opacity="0.9"
+            />
           </svg>
-          <div className="gateTtl">Sign in to TheObsidianIsle</div>
-          <div className="gateSub">Log in with Steam to load your dino stats, garage, skins and the live map.</div>
-          <button className="steamBtn" onClick={onLogin}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+
+          <div className="gateTtl">
+            Sign in to TheObsidianIsle
+          </div>
+
+          <div className="gateSub">
+            Log in with Steam to load your dino stats,
+            garage, skins and the live map.
+          </div>
+
+          <button
+            className="steamBtn"
+            onClick={onLogin}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="currentColor"
+              aria-hidden="true"
+            >
               <path d="M12 2a10 10 0 0 0-9.9 8.7l5.3 2.2a2.8 2.8 0 0 1 1.6-.5h.1l2.4-3.4v-.1a3.7 3.7 0 1 1 3.7 3.7h-.1l-3.4 2.4v.1a2.8 2.8 0 0 1-5.5.8L2 16.6A10 10 0 1 0 12 2Zm-3.6 15.2-1.2-.5a2.1 2.1 0 0 0 3.9-1 2.1 2.1 0 0 0-2.8-2l1.3.5a1.6 1.6 0 1 1-1.2 3Zm8.8-6.7a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z" />
             </svg>
+
             Sign in with Steam
           </button>
-          <div className="gateHint">Opens in your browser</div>
+
+          <div className="gateHint">
+            Opens in your browser
+          </div>
         </div>
       ) : (
-        <>
-          <div
-            className="tabBar"
-            onWheel={(e) => {
-              if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
-            }}
-          >
-            {TABS.filter(
-              (t) =>
-                (t.key !== "mapedit" || mapEditAdmin) && (t.key !== "admin" || adminModeOn),
-            ).map((t) => (
-              <button
-                key={t.key}
-                className={`tab ${tab === t.key ? "active" : ""}`}
-                onClick={() => setTab(t.key)}
-              >
-                <TabIcon name={t.key} />
-                <span>{t.label}</span>
-                {t.key === "admin" && ticketUnread > 0 ? (
-                  <span className={`tabBadge ${ticketUrgent ? "urgent" : ""}`}>{ticketUnread}</span>
-                ) : null}
-                {t.ready ? null : <span className="tabSoon">soon</span>}
-              </button>
-            ))}
-          </div>
-          <div className="tabContent">
-            {tab === "profile" ? (
-              <DashboardTab me={me} theme={theme} onGoto={setTab} supportOn={adminModeOn} />
-            ) : tab === "livemap" ? (
-              <LiveMapTab authed={authed} onLogin={onLogin} />
-            ) : tab === "skin" ? (
-              <SkinEditorTab authed={authed} onLogin={onLogin} />
-            ) : tab === "garage" ? (
-              <GarageTab authed={authed} onLogin={onLogin} />
-            ) : tab === "mapedit" && mapEditAdmin ? (
-              <MapEditorTab authed={authed} onLogin={onLogin} />
-            ) : tab === "admin" && adminModeOn ? (
-              <AdminTab authed={authed} onLogin={onLogin} />
-            ) : tab === "dinoshop" ? (
-              <DinoShopTab authed={authed} onLogin={onLogin} />
-            ) : (
-              <SkinShopTab authed={authed} onLogin={onLogin} />
-            )}
-          </div>
-        </>
+        <div className="tabContent">
+          {tab === "profile" ? (
+            <DashboardTab
+              me={me}
+              theme={theme}
+              onGoto={setTab}
+              supportOn={adminModeOn}
+            />
+          ) : tab === "livemap" ? (
+            <LiveMapTab
+              authed={authed}
+              onLogin={onLogin}
+            />
+          ) : tab === "skin" ? (
+            <SkinEditorTab
+              authed={authed}
+              onLogin={onLogin}
+            />
+          ) : tab === "garage" ? (
+            <GarageTab
+              authed={authed}
+              onLogin={onLogin}
+            />
+          ) : tab === "mapedit" && mapEditAdmin ? (
+            <MapEditorTab
+              authed={authed}
+              onLogin={onLogin}
+            />
+          ) : tab === "admin" && adminModeOn ? (
+            <AdminTab
+              authed={authed}
+              onLogin={onLogin}
+            />
+          ) : tab === "dinoshop" ? (
+            <DinoShopTab
+              authed={authed}
+              onLogin={onLogin}
+            />
+          ) : (
+            <SkinShopTab
+              authed={authed}
+              onLogin={onLogin}
+            />
+          )}
+        </div>
       )}
+
+      <div
+        className="resizeHandle"
+        onMouseDown={onResizeDown}
+        title="Resize dashboard"
+        aria-label="Resize dashboard"
+      >
+        <span />
+        <span />
+        <span />
+      </div>
     </div>
   );
 }
