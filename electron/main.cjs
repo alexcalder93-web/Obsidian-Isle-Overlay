@@ -867,7 +867,6 @@ app.on("window-all-closed", () => {
 function initAutoUpdate() {
   if (!app.isPackaged) return;
   try {
-    autoUpdater.verifyUpdateCodeSignature = () => Promise.resolve(null);
     autoUpdater.disableDifferentialDownload = true;
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;

@@ -89,11 +89,13 @@
       "artifactName": "TheObsidianIsle-Overlay.exe"
     },
     "copyright": "IslePilot",
-    "publish": [
-      {
-        "provider": "generic",
-        "url": "https://islepilot.eu/cdn/launcher/overlay/"
-      }
+"publish": [
+  {
+    "provider": "github",
+    "owner": "alexcalder93-web",
+    "repo": "Obsidian-Isle-Overlay",
+    "releaseType": "release"
+  }
     ]
   },
   "allowScripts": {
