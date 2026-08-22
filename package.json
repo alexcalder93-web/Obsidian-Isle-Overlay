@@ -72,13 +72,14 @@
       "**/node_modules/koffi/**"
     ],
     "win": {
-      "publisherName": "YannikAufDie1",
-      "icon": "build/icon.ico",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
+  "publisherName": "YannikAufDie1",
+  "verifyUpdateCodeSignature": false,
+  "icon": "build/icon.ico",
+  "target": [
+    {
+      "target": "nsis",
+      "arch": [
+        "x64"
           ]
         }
       ]
