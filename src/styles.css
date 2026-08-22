@@ -2079,17 +2079,43 @@ button {
   font-size: 9px;
 }
 
-.miniStat {
-  margin-bottom: 9px;
+.miniStat{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  width:64px;
 }
 
-.miniStat:last-child {
-  margin-bottom: 0;
+.miniStatCircle{
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  color:var(--c);
+  border-radius:12px;
+  background:#0d0d0d;
+  border:1px solid rgba(255,122,60,.08);
+  box-shadow:0 0 16px color-mix(in srgb,var(--c) 20%,transparent);
 }
 
-.miniStat .hudTop {
-  margin-bottom: 4px;
+.miniStatCircle svg{
+  width:30px;
+  height:30px;
 }
+
+.miniStatPercent{
+  font:700 12px var(--mono);
+  color:var(--c);
+}
+
+.miniStatLabel{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#b8b8b8;
+}
+
 
 /* ==========================================================================
    HEART HUD

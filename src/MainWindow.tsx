@@ -183,6 +183,44 @@ export function StatGlyph({ name }: { name: string }) {
     </svg>
   );
 }
+function StatFillIcon({
+  icon,
+  percent,
+}: {
+  icon: string;
+  percent: number;
+}) {
+  const fillY = 24 - (24 * percent) / 100;
+  const clipId = `clip-${icon}`;
+
+  return (
+    <svg viewBox="0 0 24 24">
+      <defs>
+        <clipPath id={clipId}>
+          {STAT_ICONS[icon]}
+        </clipPath>
+      </defs>
+
+      <g color="rgba(255,255,255,.15)">
+        {STAT_ICONS[icon]}
+      </g>
+
+      <g clipPath={`url(#${clipId})`}>
+        <rect
+          x="0"
+          y={fillY}
+          width="24"
+          height="24"
+          fill="currentColor"
+        />
+      </g>
+
+      <g color="currentColor">
+        {STAT_ICONS[icon]}
+      </g>
+    </svg>
+  );
+}
 
 function VitalBar({
   icon,
@@ -316,72 +354,29 @@ function MiniStat({
   value,
   max,
   color,
-  suffix = "%",
 }: {
   icon: string;
   label: string;
   value?: number | null;
   max?: number | null;
   color: string;
-  suffix?: string;
 }) {
-  const v =
-    typeof value === "number"
-      ? value
-      : null;
-
-  const m =
-    typeof max === "number" && max > 0
-      ? max
-      : null;
+  const v = typeof value === "number" ? value : null;
+  const m = typeof max === "number" && max > 0 ? max : null;
 
   const pct =
     v != null && m != null
-      ? Math.max(
-          0,
-          Math.min(100, (v / m) * 100),
-        )
-      : null;
-
-  const shown =
-    pct != null
-      ? Math.round(pct)
-      : v != null
-        ? Math.round(v)
-        : null;
+      ? Math.max(0, Math.min(100, (v / m) * 100))
+      : 0;
 
   return (
-    <div
-      className="miniStat"
-      style={{ ["--c" as string]: color }}
-    >
-      <div className="hudTop">
-        <span className="hudIcon">
-          <StatGlyph name={icon} />
-        </span>
-
-        <span className="hudLabel">
-          {label}
-        </span>
-
-        <span className="hudVal">
-          {shown != null
-            ? `${shown}${suffix}`
-            : "—"}
-        </span>
+    <div className="miniStat" style={{ ["--c" as string]: color }}>
+      <div className="miniStatCircle">
+        <StatFillIcon icon={icon} percent={pct} />
       </div>
 
-      <div className="vitalTrack">
-        <div
-          className="vitalFill"
-          style={{
-            width:
-              pct != null
-                ? `${pct}%`
-                : "0%",
-          }}
-        />
-      </div>
+      <div className="miniStatPercent">{Math.round(pct)}%</div>
+      <div className="miniStatLabel">{label}</div>
     </div>
   );
 }
