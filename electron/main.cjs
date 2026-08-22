@@ -867,11 +867,17 @@ app.on("window-all-closed", () => {
 });
 
 function initAutoUpdate() {
+  const { dialog } = require("electron");
+
   // TEMP TEST FOR v0.3.5
-  require("electron").dialog.showMessageBoxSync({
+  dialog.showMessageBoxSync({
     type: "info",
-    title: "Updater Test",
-    message: `Updater started!\nVersion: ${app.getVersion()}\nPackaged: ${app.isPackaged}`,
+    title: "Updater Test - Step 1",
+    message:
+      `Updater started!\n\n` +
+      `Version: ${app.getVersion()}\n` +
+      `Packaged: ${app.isPackaged}\n\n` +
+      `The updater initialization has started.`,
   });
 
   if (!app.isPackaged) {
@@ -880,12 +886,15 @@ function initAutoUpdate() {
   }
 
   try {
+    console.log("[Updater] Initializing autoUpdater...");
+
     autoUpdater.disableDifferentialDownload = true;
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
 
     const emit = (payload) => {
       lastUpdaterState = payload;
+
       console.log("[Updater Event]", payload);
 
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -893,60 +902,249 @@ function initAutoUpdate() {
       }
     };
 
+    // ---------------------------------------------------------
+    // CHECKING
+    // ---------------------------------------------------------
+
     autoUpdater.on("checking-for-update", () => {
-      console.log("[Updater] Checking for updates...");
-    });
+      console.log("[Updater] checking-for-update");
 
-    autoUpdater.on("update-available", (info) => {
-      console.log("[Updater] Update available:", info);
-      emit({ state: "available", version: info?.version });
-    });
+      dialog.showMessageBox({
+        type: "info",
+        title: "Updater Test - Step 2",
+        message:
+          `The updater is now checking for an update.\n\n` +
+          `Current version: ${app.getVersion()}`,
+      });
 
-    autoUpdater.on("update-not-available", (info) => {
-      console.log("[Updater] No update available.", info);
-      emit({ state: "none" });
-    });
-
-    autoUpdater.on("download-progress", (progress) => {
-      console.log(`[Updater] Download ${Math.round(progress.percent)}%`);
       emit({
-        state: "downloading",
-        percent: Math.round(progress.percent),
+        state: "checking",
+        version: app.getVersion(),
       });
     });
 
+    // ---------------------------------------------------------
+    // UPDATE AVAILABLE
+    // ---------------------------------------------------------
+
+    autoUpdater.on("update-available", (info) => {
+      console.log("[Updater] update-available:", info);
+
+      dialog.showMessageBox({
+        type: "info",
+        title: "Updater Test - Step 3",
+        message:
+          `UPDATE AVAILABLE!\n\n` +
+          `Current version: ${app.getVersion()}\n` +
+          `Available version: ${info?.version || "Unknown"}\n\n` +
+          `The updater should now begin downloading.`,
+      });
+
+      emit({
+        state: "available",
+        version: info?.version,
+      });
+    });
+
+    // ---------------------------------------------------------
+    // UPDATE NOT AVAILABLE
+    // ---------------------------------------------------------
+
+    autoUpdater.on("update-not-available", (info) => {
+      console.log("[Updater] update-not-available:", info);
+
+      dialog.showMessageBox({
+        type: "info",
+        title: "Updater Test - Step 3",
+        message:
+          `NO UPDATE AVAILABLE.\n\n` +
+          `Current version: ${app.getVersion()}\n` +
+          `Latest version: ${info?.version || "Unknown"}\n\n` +
+          `The updater successfully contacted the update server.`,
+      });
+
+      emit({
+        state: "none",
+        version: info?.version,
+      });
+    });
+
+    // ---------------------------------------------------------
+    // DOWNLOAD PROGRESS
+    // ---------------------------------------------------------
+
+    let lastShownPercent = -1;
+
+    autoUpdater.on("download-progress", (progress) => {
+      const percent = Math.round(progress.percent);
+
+      console.log(
+        `[Updater] Download progress: ${percent}%`
+      );
+
+      emit({
+        state: "downloading",
+        percent,
+        transferred: progress.transferred,
+        total: progress.total,
+        bytesPerSecond: progress.bytesPerSecond,
+      });
+
+      // Only show a popup every 10%
+      if (
+        percent >= 0 &&
+        percent <= 100 &&
+        percent % 10 === 0 &&
+        percent !== lastShownPercent
+      ) {
+        lastShownPercent = percent;
+
+        dialog.showMessageBox({
+          type: "info",
+          title: "Updater Test - Download",
+          message:
+            `Downloading update...\n\n` +
+            `Progress: ${percent}%`,
+        });
+      }
+    });
+
+    // ---------------------------------------------------------
+    // UPDATE DOWNLOADED
+    // ---------------------------------------------------------
+
     autoUpdater.on("update-downloaded", (info) => {
-      console.log("[Updater] Update downloaded:", info);
-      emit({ state: "downloaded", version: info?.version });
+      console.log("[Updater] update-downloaded:", info);
+
+      emit({
+        state: "downloaded",
+        version: info?.version,
+      });
+
+      dialog.showMessageBox({
+        type: "info",
+        title: "Updater Test - Step 5",
+        message:
+          `UPDATE DOWNLOADED!\n\n` +
+          `Version: ${info?.version || "Unknown"}\n\n` +
+          `The updater is ready to install the update.`,
+      });
 
       setTimeout(() => {
         try {
-          console.log("[Updater] Installing...");
+          console.log("[Updater] Installing update...");
+
+          dialog.showMessageBox({
+            type: "info",
+            title: "Updater Test - Step 6",
+            message:
+              `Installing update now.\n\n` +
+              `The overlay will restart.`,
+          });
+
           autoUpdater.quitAndInstall(true, true);
         } catch (err) {
           console.error("[Updater] Install failed:", err);
+
+          dialog.showErrorBox(
+            "Updater Installation Failed",
+            err?.stack || err?.message || String(err)
+          );
+
+          emit({
+            state: "error",
+            message: err?.message || String(err),
+          });
         }
       }, 1500);
     });
 
+    // ---------------------------------------------------------
+    // ERROR
+    // ---------------------------------------------------------
+
     autoUpdater.on("error", (err) => {
-      console.error("[Updater] Error:", err);
+      console.error("[Updater] ERROR:", err);
+
+      const message =
+        err?.stack ||
+        err?.message ||
+        String(err);
+
+      dialog.showErrorBox(
+        "Updater Error",
+        message
+      );
+
       emit({
         state: "error",
-        message: err?.message || String(err),
+        message,
       });
     });
 
-    autoUpdater.checkForUpdates().catch((err) => {
-      console.error("[Updater] Check failed:", err);
-    });
+    // ---------------------------------------------------------
+    // START UPDATE CHECK
+    // ---------------------------------------------------------
+
+    console.log(
+      `[Updater] Starting update check. Current version: ${app.getVersion()}`
+    );
+
+    autoUpdater.checkForUpdates()
+      .then((result) => {
+        console.log(
+          "[Updater] checkForUpdates() completed:",
+          result
+        );
+      })
+      .catch((err) => {
+        console.error(
+          "[Updater] checkForUpdates() failed:",
+          err
+        );
+
+        dialog.showErrorBox(
+          "Updater Check Failed",
+          err?.stack || err?.message || String(err)
+        );
+
+        emit({
+          state: "error",
+          message: err?.message || String(err),
+        });
+      });
+
+    // ---------------------------------------------------------
+    // PERIODIC CHECK
+    // ---------------------------------------------------------
 
     setInterval(() => {
-      autoUpdater.checkForUpdates().catch((err) => {
-        console.error("[Updater] Scheduled check failed:", err);
-      });
+      console.log("[Updater] Scheduled update check...");
+
+      autoUpdater.checkForUpdates()
+        .then((result) => {
+          console.log(
+            "[Updater] Scheduled check completed:",
+            result
+          );
+        })
+        .catch((err) => {
+          console.error(
+            "[Updater] Scheduled check failed:",
+            err
+          );
+        });
     }, 10 * 60 * 1000);
+
   } catch (err) {
-    console.error("[Updater] Initialization failed:", err);
+    console.error(
+      "[Updater] Initialization failed:",
+      err
+    );
+
+    dialog.showErrorBox(
+      "Updater Initialization Failed",
+      err?.stack || err?.message || String(err)
+    );
   }
 }

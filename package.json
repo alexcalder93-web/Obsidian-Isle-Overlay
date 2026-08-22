@@ -1,7 +1,7 @@
 {
   "name": "isle-overlay",
   "private": true,
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "TheObsidianIsle in-game overlay",
   "author": "YannikAufDie1",
   "type": "module",
@@ -89,13 +89,13 @@
       "artifactName": "TheObsidianIsle-Overlay-${version}.exe"
     },
     "copyright": "IslePilot",
-"publish": [
-  {
-    "provider": "github",
-    "owner": "alexcalder93-web",
-    "repo": "Obsidian-Isle-Overlay",
-    "releaseType": "release"
-  }
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "alexcalder93-web",
+        "repo": "Obsidian-Isle-Overlay",
+        "releaseType": "release"
+      }
     ]
   },
   "allowScripts": {
