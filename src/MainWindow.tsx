@@ -919,7 +919,10 @@ function PageDropdown({
   onChange: (tab: TabKey) => void;
 }) {
   return (
-    <div className="pageDropdown">
+    <div
+      className="pageDropdown interactive-region"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <svg
         className="pageDropdownIcon"
         viewBox="0 0 24 24"
@@ -938,11 +941,9 @@ function PageDropdown({
       <select
         className="pageSelect"
         value={tab}
-        onChange={(e) =>
-          onChange(
-            e.target.value as TabKey,
-          )
-        }
+        onChange={(e) => {
+          onChange(e.target.value as TabKey);
+        }}
         aria-label="Select page"
       >
         {availableTabs.map((t) => (
@@ -1263,82 +1264,88 @@ export function MainWindow({
       });
   };
 
-  const onDown = (
-    e: React.MouseEvent,
+const onDown = (
+  e: React.MouseEvent,
+) => {
+  const target = e.target as HTMLElement;
+
+  // Do not start dragging when clicking interactive controls.
+  if (
+    target.closest(
+      "button, select, input, textarea, a, .interactive-region",
+    )
+  ) {
+    return;
+  }
+
+  // Only allow dragging from the drag handle.
+  if (!target.closest(".dragHandle")) {
+    return;
+  }
+
+  e.preventDefault();
+
+  off.current = {
+    x: e.clientX - pos.x,
+    y: e.clientY - pos.y,
+  };
+
+  lockInteract();
+
+  const move = (
+    ev: MouseEvent,
   ) => {
-    if (
-      !(e.target as HTMLElement).closest(
-        ".dragHandle",
-      )
-    ) {
-      return;
-    }
+    if (!off.current) return;
 
-    e.preventDefault();
-
-    off.current = {
-      x: e.clientX - pos.x,
-      y: e.clientY - pos.y,
-    };
-
-    lockInteract();
-
-    const move = (
-      ev: MouseEvent,
-    ) => {
-      if (!off.current) return;
-
-      setPos({
-        x: Math.max(
-          0,
-          Math.min(
-            window.innerWidth - 160,
-            ev.clientX -
-              off.current.x,
-          ),
+    setPos({
+      x: Math.max(
+        0,
+        Math.min(
+          window.innerWidth - 160,
+          ev.clientX - off.current.x,
         ),
+      ),
 
-        y: Math.max(
-          0,
-          Math.min(
-            window.innerHeight - 46,
-            ev.clientY -
-              off.current.y,
-          ),
+      y: Math.max(
+        0,
+        Math.min(
+          window.innerHeight - 46,
+          ev.clientY - off.current.y,
         ),
-      });
-    };
+      ),
+    });
+  };
 
-    const up = () => {
-      window.removeEventListener(
-        "mousemove",
-        move,
-      );
-
-      window.removeEventListener(
-        "mouseup",
-        up,
-      );
-
-      off.current = null;
-      unlockInteract();
-
-      setPos((cur) => {
-        saveLayout(cur, size);
-        return cur;
-      });
-    };
-
-    window.addEventListener(
+  const up = () => {
+    window.removeEventListener(
       "mousemove",
       move,
     );
 
-    window.addEventListener(
+    window.removeEventListener(
       "mouseup",
       up,
     );
+
+    off.current = null;
+    unlockInteract();
+
+    setPos((cur) => {
+      saveLayout(cur, size);
+      return cur;
+    });
   };
+
+  window.addEventListener(
+    "mousemove",
+    move,
+  );
+
+  window.addEventListener(
+    "mouseup",
+    up,
+  );
+};
 
   /*
    * MAIN WINDOW RESIZE
