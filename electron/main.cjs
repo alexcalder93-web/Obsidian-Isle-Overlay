@@ -867,34 +867,86 @@ app.on("window-all-closed", () => {
 });
 
 function initAutoUpdate() {
-  if (!app.isPackaged) return;
+  // TEMP TEST FOR v0.3.5
+  require("electron").dialog.showMessageBoxSync({
+    type: "info",
+    title: "Updater Test",
+    message: `Updater started!\nVersion: ${app.getVersion()}\nPackaged: ${app.isPackaged}`,
+  });
+
+  if (!app.isPackaged) {
+    console.log("[Updater] Running in development mode.");
+    return;
+  }
+
   try {
     autoUpdater.disableDifferentialDownload = true;
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
+
     const emit = (payload) => {
       lastUpdaterState = payload;
-      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("updater:event", payload);
+      console.log("[Updater Event]", payload);
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("updater:event", payload);
+      }
     };
-	autoUpdater.on("checking-for-update", () => {
-  emit({ state: "checking" });
-});
-    autoUpdater.on("update-available", (i) => emit({ state: "available", version: i && i.version }));
-    autoUpdater.on("update-not-available", () => emit({ state: "none" }));
-    autoUpdater.on("download-progress", (p) => emit({ state: "downloading", percent: p ? Math.round(p.percent) : 0 }));
-    autoUpdater.on("update-downloaded", (i) => {
-      emit({ state: "downloaded", version: i && i.version });
+
+    autoUpdater.on("checking-for-update", () => {
+      console.log("[Updater] Checking for updates...");
+    });
+
+    autoUpdater.on("update-available", (info) => {
+      console.log("[Updater] Update available:", info);
+      emit({ state: "available", version: info?.version });
+    });
+
+    autoUpdater.on("update-not-available", (info) => {
+      console.log("[Updater] No update available.", info);
+      emit({ state: "none" });
+    });
+
+    autoUpdater.on("download-progress", (progress) => {
+      console.log(`[Updater] Download ${Math.round(progress.percent)}%`);
+      emit({
+        state: "downloading",
+        percent: Math.round(progress.percent),
+      });
+    });
+
+    autoUpdater.on("update-downloaded", (info) => {
+      console.log("[Updater] Update downloaded:", info);
+      emit({ state: "downloaded", version: info?.version });
+
       setTimeout(() => {
-        try { autoUpdater.quitAndInstall(true, true); } catch {}
+        try {
+          console.log("[Updater] Installing...");
+          autoUpdater.quitAndInstall(true, true);
+        } catch (err) {
+          console.error("[Updater] Install failed:", err);
+        }
       }, 1500);
     });
-    autoUpdater.on("error", (e) => emit({ state: "error", message: e && (e.message || String(e)) }));
-    autoUpdater.checkForUpdates().catch(() => {});
-setInterval(() => {
-  autoUpdater.checkForUpdates().catch((err) => {
-    console.error("[Updater] Scheduled check failed:", err);
-  });
-}, 10 * 60 * 1000);
-  } catch {
+
+    autoUpdater.on("error", (err) => {
+      console.error("[Updater] Error:", err);
+      emit({
+        state: "error",
+        message: err?.message || String(err),
+      });
+    });
+
+    autoUpdater.checkForUpdates().catch((err) => {
+      console.error("[Updater] Check failed:", err);
+    });
+
+    setInterval(() => {
+      autoUpdater.checkForUpdates().catch((err) => {
+        console.error("[Updater] Scheduled check failed:", err);
+      });
+    }, 10 * 60 * 1000);
+  } catch (err) {
+    console.error("[Updater] Initialization failed:", err);
   }
 }
