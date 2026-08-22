@@ -3696,3 +3696,232 @@ select:focus {
     );
   opacity: 0.7;
 }
+/* ==========================================================================
+   SMART NOTIFICATIONS
+   ========================================================================== */
+
+.smartNotifications {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+
+  width: min(360px, calc(100vw - 32px));
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  pointer-events: none;
+}
+
+.smartNotification {
+  --notification-accent: var(--phos);
+
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 58px;
+
+  padding: 10px 12px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 20, 24, 0.96),
+      rgba(7, 7, 10, 0.96)
+    );
+
+  border: 1px solid color-mix(
+    in srgb,
+    var(--notification-accent) 28%,
+    var(--line)
+  );
+
+  border-radius: 10px;
+
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.48),
+    inset 0 0 22px rgba(255, 255, 255, 0.015);
+
+  backdrop-filter: blur(12px);
+
+  animation:
+    smartNotificationIn
+    0.28s
+    cubic-bezier(.2,.8,.2,1)
+    both;
+}
+
+.smartNotification::before {
+  content: "";
+
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 3px;
+
+  background: var(--notification-accent);
+
+  box-shadow:
+    0 0 12px var(--notification-accent);
+}
+
+.smartNotificationIcon {
+  flex: none;
+
+  width: 27px;
+  height: 27px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 7px;
+
+  color: var(--notification-accent);
+
+  background: color-mix(
+    in srgb,
+    var(--notification-accent) 11%,
+    transparent
+  );
+
+  border: 1px solid color-mix(
+    in srgb,
+    var(--notification-accent) 22%,
+    transparent
+  );
+
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+
+  text-shadow:
+    0 0 10px var(--notification-accent);
+}
+
+.smartNotificationBody {
+  min-width: 0;
+  flex: 1;
+}
+
+.smartNotificationTitle {
+  color: var(--text);
+
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.09em;
+}
+
+.smartNotificationMessage {
+  margin-top: 3px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.smartNotificationValue {
+  flex: none;
+
+  color: var(--notification-accent);
+
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+
+  text-shadow:
+    0 0 8px var(--notification-accent);
+}
+
+.smartNotificationTimer {
+  position: absolute;
+
+  left: 0;
+  bottom: 0;
+
+  height: 2px;
+  width: 100%;
+
+  transform-origin: left;
+
+  background: var(--notification-accent);
+
+  animation-name: smartNotificationTimer;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+
+  opacity: 0.65;
+}
+
+.smartNotification-info {
+  --notification-accent: #5ab6ff;
+}
+
+.smartNotification-success {
+  --notification-accent: #7cf2a6;
+}
+
+.smartNotification-warning {
+  --notification-accent: #ffb454;
+}
+
+.smartNotification-critical {
+  --notification-accent: #ff5148;
+
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(255, 81, 72, 0.08),
+    inset 0 0 22px rgba(255, 81, 72, 0.025);
+}
+
+@keyframes smartNotificationIn {
+  from {
+    opacity: 0;
+    transform: translateX(28px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes smartNotificationTimer {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .smartNotifications {
+    top: 12px;
+    right: 12px;
+    width: min(340px, calc(100vw - 24px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smartNotification {
+    animation: none;
+  }
+
+  .smartNotificationTimer {
+    animation: none;
+    opacity: 0;
+  }
+}

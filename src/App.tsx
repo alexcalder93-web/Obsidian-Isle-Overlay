@@ -1,9 +1,15 @@
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isInteractLocked, lockInteract, unlockInteract } from "./interaction";
 import { HeartHud, MainWindow, StatsWidget } from "./MainWindow";
 import { RadarPanel } from "./RadarPanel";
 import { TrollLayer } from "./TrollLayer";
 import { ColorSwatch } from "./ColorPicker";
+import {
+  SmartNotificationLayer,
+  SmartNotificationSettings,
+  DEFAULT_SMART_NOTIFICATION_SETTINGS,
+} from "./SmartNotifications";
 import type {
   AuthInfo,
   LiveFrame,
@@ -266,14 +272,15 @@ function SettingsPanel({
     setRecordingDash(false);
     if (k) setDashKey(k);
   }
-  const SETTINGS_CATS = [
-    { key: "widgets", label: "Widgets" },
-    { key: "radar", label: "Radar" },
-    { key: "controls", label: "Controls" },
-    { key: "streaming", label: "Streaming" },
-    { key: "appearance", label: "Appearance" },
-    { key: "account", label: "Account" },
-  ];
+const SETTINGS_CATS = [
+  { key: "widgets", label: "Widgets" },
+  { key: "radar", label: "Radar" },
+  { key: "notifications", label: "Notifications" },
+  { key: "controls", label: "Controls" },
+  { key: "streaming", label: "Streaming" },
+  { key: "appearance", label: "Appearance" },
+  { key: "account", label: "Account" },
+];
   const [cat, setCat] = useState("widgets");
   const [streamerMode, setStreamerMode] = useState(settings?.streamerMode ?? false);
   const [compatMode, setCompatMode] = useState(settings?.compatMode ?? false);
@@ -526,6 +533,20 @@ function SettingsPanel({
           </div>
 
           </>)}
+		  {cat === "notifications" && (
+  <SmartNotificationSettings
+    settings={
+      settings?.smartNotifications ??
+      DEFAULT_SMART_NOTIFICATION_SETTINGS
+    }
+    onChange={(next) => {
+      void window.isleOverlay.setSettings({
+        smartNotifications: next,
+      });
+    }}
+  />
+)}
+
           {cat === "account" && (<>
           <div className="secLabel">account</div>
           <div className="menuFoot">
@@ -768,6 +789,15 @@ export function App() {
   return (
     <div className="overlay">
       <TrollLayer />
+<SmartNotificationLayer
+  me={view}
+  settings={
+    settings?.smartNotifications ??
+    DEFAULT_SMART_NOTIFICATION_SETTINGS
+  }
+  supportUnread={ticketSummary.unread}
+  theme={theme}
+/>
       <div style={{ display: mainOpen ? "contents" : "none" }}>
         <MainWindow
           me={view}

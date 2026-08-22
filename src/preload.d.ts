@@ -23,9 +23,30 @@ mainHeight?: number;
   dashKey: string;
   streamerMode: boolean;
   compatMode: boolean;
+smartNotifications: {
+  enabled: boolean;
+  threshold: number;
+  duration: number;
+  types: {
+    health: boolean;
+    hunger: boolean;
+    thirst: boolean;
+    stamina: boolean;
+    growth: boolean;
+    prime: boolean;
+    elder: boolean;
+    support: boolean;
+    update: boolean;
+    death: boolean;
+  };
+};
 };
 
-export type OverlayState = { gameDetected: boolean; active: boolean; focused?: boolean };
+export type OverlayState = {
+  gameDetected: boolean;
+  active: boolean;
+  focused?: boolean;
+};
 
 export type PrimeQuest = { name: string; done: boolean };
 export type PlayerMe = {
