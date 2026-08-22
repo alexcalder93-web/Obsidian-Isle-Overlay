@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { isInteractLocked, lockInteract, unlockInteract } from "./interaction";
+import {
+  isInteractLocked,
+  lockInteract,
+  unlockInteract,
+} from "./interaction";
 import { DinoShopTab } from "./DinoShopTab";
 import { GarageTab } from "./GarageTab";
 import { LiveMapTab } from "./LiveMapTab";
@@ -7,7 +11,11 @@ import { SkinEditorTab } from "./SkinEditorTab";
 import { SkinShopTab } from "./SkinShopTab";
 import { MapEditorTab } from "./MapEditorTab";
 import { AdminTab } from "./AdminTab";
-import type { OverlaySettings, OverlayTheme, PlayerMe } from "./preload";
+import type {
+  OverlaySettings,
+  OverlayTheme,
+  PlayerMe,
+} from "./preload";
 
 export type TabKey =
   | "profile"
@@ -30,8 +38,15 @@ const TABS: { key: TabKey; label: string; ready?: boolean }[] = [
   { key: "mapedit", label: "Map Editor", ready: true },
 ];
 
-type Pos = { x: number; y: number };
-type Size = { width: number; height: number };
+type Pos = {
+  x: number;
+  y: number;
+};
+
+type Size = {
+  width: number;
+  height: number;
+};
 
 const DEFAULT_SIZE: Size = {
   width: 720,
@@ -50,6 +65,7 @@ const TAB_ICONS: Record<TabKey, ReactNode> = {
       <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
     </>
   ),
+
   livemap: (
     <>
       <path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z" />
@@ -57,6 +73,7 @@ const TAB_ICONS: Record<TabKey, ReactNode> = {
       <path d="M15 6v15" />
     </>
   ),
+
   skin: (
     <>
       <circle cx="13.5" cy="6.5" r="1.3" />
@@ -66,6 +83,7 @@ const TAB_ICONS: Record<TabKey, ReactNode> = {
       <path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2.4a5 5 0 0 0 5-5 8 8 0 0 0-8-8Z" />
     </>
   ),
+
   garage: (
     <>
       <path d="M3 21V8l9-5 9 5v13" />
@@ -73,6 +91,7 @@ const TAB_ICONS: Record<TabKey, ReactNode> = {
       <path d="M9 21v-6h6v6" />
     </>
   ),
+
   mapedit: (
     <>
       <path d="M12 2 3 7l9 5 9-5-9-5Z" />
@@ -80,6 +99,7 @@ const TAB_ICONS: Record<TabKey, ReactNode> = {
       <path d="m3 17 9 5 9-5" />
     </>
   ),
+
   dinoshop: (
     <>
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
@@ -87,11 +107,13 @@ const TAB_ICONS: Record<TabKey, ReactNode> = {
       <path d="M16 10a4 4 0 0 1-8 0" />
     </>
   ),
+
   skinshop: (
     <>
       <path d="M20.4 6.5 16 4a2.2 2.2 0 0 1-4 0 2.2 2.2 0 0 1-4 0L3.6 6.5l2 3.6L8 9v11h8V9l2.4 1.1Z" />
     </>
   ),
+
   admin: (
     <>
       <path d="M12 2 4 5v6c0 4.4 3.1 8.1 8 9 4.9-.9 8-4.6 8-9V5l-8-3Z" />
@@ -104,13 +126,17 @@ const STAT_ICONS: Record<string, ReactNode> = {
   health: (
     <path d="M12 20.5s-7-4.2-9.2-8.3C1.3 9 2.7 5.6 6 5.6c2 0 3.2 1.2 4 2.6.8-1.4 2-2.6 4-2.6 3.3 0 4.7 3.4 3.2 6.6C19 16.3 12 20.5 12 20.5Z" />
   ),
+
   stamina: <path d="M13 2 4 13.5h6L9 22l9-11.5h-6L13 2Z" />,
+
   hunger: (
-    <>
-      <path d="M15.5 6.5a4 4 0 0 0-7 2.5c0 1.2-.7 1.8-1.5 2.6a3 3 0 1 0 4.2 4.2c.8-.8 1.4-1.5 2.6-1.5a4 4 0 0 0 1.7-7.8Z" />
-    </>
+    <path d="M15.5 6.5a4 4 0 0 0-7 2.5c0 1.2-.7 1.8-1.5 2.6a3 3 0 1 0 4.2 4.2c.8-.8 1.4-1.5 2.6-1.5a4 4 0 0 0 1.7-7.8Z" />
   ),
-  thirst: <path d="M12 3s6 6.4 6 10.5a6 6 0 0 1-12 0C6 9.4 12 3 12 3Z" />,
+
+  thirst: (
+    <path d="M12 3s6 6.4 6 10.5a6 6 0 0 1-12 0C6 9.4 12 3 12 3Z" />
+  ),
+
   growth: (
     <>
       <path d="M12 21v-9" />
@@ -174,31 +200,56 @@ function VitalBar({
   suffix?: string;
 }) {
   const v = typeof value === "number" ? value : null;
-  const m = typeof max === "number" && max > 0 ? max : null;
+  const m =
+    typeof max === "number" && max > 0
+      ? max
+      : null;
+
   const pct =
     v != null && m != null
-      ? Math.max(0, Math.min(100, (v / m) * 100))
+      ? Math.max(
+          0,
+          Math.min(100, (v / m) * 100),
+        )
       : null;
 
   const shown =
-    pct != null ? Math.round(pct) : v != null ? Math.round(v) : null;
+    pct != null
+      ? Math.round(pct)
+      : v != null
+        ? Math.round(v)
+        : null;
 
   return (
-    <div className="vital" style={{ ["--c" as string]: color }}>
+    <div
+      className="vital"
+      style={{ ["--c" as string]: color }}
+    >
       <div className="vitalHead">
         <span className="vitalIcon">
           <StatGlyph name={icon} />
         </span>
-        <span className="vitalName">{label}</span>
+
+        <span className="vitalName">
+          {label}
+        </span>
+
         <span className="vitalVal">
-          {shown != null ? `${shown}${suffix}` : "—"}
+          {shown != null
+            ? `${shown}${suffix}`
+            : "—"}
         </span>
       </div>
 
       <div className="vitalTrack">
         <div
           className="vitalFill"
-          style={{ width: pct != null ? `${pct}%` : "0%" }}
+          style={{
+            width:
+              pct != null
+                ? `${pct}%`
+                : "0%",
+          }}
         />
       </div>
     </div>
@@ -214,22 +265,45 @@ function NutBar({
   value?: number | null;
   color: string;
 }) {
-  const v = typeof value === "number" ? value : null;
-  const pct = v != null ? Math.max(4, Math.min(100, (v / 5000) * 100)) : null;
+  const v =
+    typeof value === "number"
+      ? value
+      : null;
+
+  const pct =
+    v != null
+      ? Math.max(
+          4,
+          Math.min(100, (v / 5000) * 100),
+        )
+      : null;
 
   return (
-    <div className="vital" style={{ ["--c" as string]: color }}>
+    <div
+      className="vital"
+      style={{ ["--c" as string]: color }}
+    >
       <div className="vitalHead">
-        <span className="vitalName">{label}</span>
+        <span className="vitalName">
+          {label}
+        </span>
+
         <span className="vitalVal mono">
-          {v != null ? v.toFixed(1) : "—"}
+          {v != null
+            ? v.toFixed(1)
+            : "—"}
         </span>
       </div>
 
       <div className="vitalTrack">
         <div
           className="vitalFill"
-          style={{ width: pct != null ? `${pct}%` : "0%" }}
+          style={{
+            width:
+              pct != null
+                ? `${pct}%`
+                : "0%",
+          }}
         />
       </div>
     </div>
@@ -251,33 +325,61 @@ function MiniStat({
   color: string;
   suffix?: string;
 }) {
-  const v = typeof value === "number" ? value : null;
-  const m = typeof max === "number" && max > 0 ? max : null;
+  const v =
+    typeof value === "number"
+      ? value
+      : null;
+
+  const m =
+    typeof max === "number" && max > 0
+      ? max
+      : null;
 
   const pct =
     v != null && m != null
-      ? Math.max(0, Math.min(100, (v / m) * 100))
+      ? Math.max(
+          0,
+          Math.min(100, (v / m) * 100),
+        )
       : null;
 
   const shown =
-    pct != null ? Math.round(pct) : v != null ? Math.round(v) : null;
+    pct != null
+      ? Math.round(pct)
+      : v != null
+        ? Math.round(v)
+        : null;
 
   return (
-    <div className="miniStat" style={{ ["--c" as string]: color }}>
+    <div
+      className="miniStat"
+      style={{ ["--c" as string]: color }}
+    >
       <div className="hudTop">
         <span className="hudIcon">
           <StatGlyph name={icon} />
         </span>
-        <span className="hudLabel">{label}</span>
+
+        <span className="hudLabel">
+          {label}
+        </span>
+
         <span className="hudVal">
-          {shown != null ? `${shown}${suffix}` : "—"}
+          {shown != null
+            ? `${shown}${suffix}`
+            : "—"}
         </span>
       </div>
 
       <div className="vitalTrack">
         <div
           className="vitalFill"
-          style={{ width: pct != null ? `${pct}%` : "0%" }}
+          style={{
+            width:
+              pct != null
+                ? `${pct}%`
+                : "0%",
+          }}
         />
       </div>
     </div>
@@ -295,12 +397,17 @@ export function StatsWidget({
     <div className="hud statsWidget dragHandle">
       <div className="hudTitle">
         <span className="hudTitleName">
-          {me?.hasData && me.species ? me.species : "Stats"}
+          {me?.hasData && me.species
+            ? me.species
+            : "Stats"}
         </span>
 
         {me?.growth != null ? (
           <span className="hudTitleBadge">
-            {Math.round(me.growth * 100)}%
+            {Math.round(
+              me.growth * 100,
+            )}
+            %
           </span>
         ) : null}
       </div>
@@ -342,13 +449,19 @@ export function StatsWidget({
           <MiniStat
             icon="growth"
             label="Growth"
-            value={me.growth != null ? me.growth * 100 : null}
+            value={
+              me.growth != null
+                ? me.growth * 100
+                : null
+            }
             max={100}
             color="#4ade80"
           />
         </>
       ) : (
-        <div className="hudEmpty">no live dino</div>
+        <div className="hudEmpty">
+          no live dino
+        </div>
       )}
     </div>
   );
@@ -363,27 +476,46 @@ const HEART_D =
 const HEART_TOP = 20;
 const HEART_BOTTOM = 68;
 
-export function HeartHud({ me }: { me: PlayerMe | null }) {
-  const v = typeof me?.health === "number" ? me.health : null;
+export function HeartHud({
+  me,
+}: {
+  me: PlayerMe | null;
+}) {
+  const v =
+    typeof me?.health === "number"
+      ? me.health
+      : null;
+
   const m =
-    typeof me?.maxHealth === "number" && me.maxHealth > 0
+    typeof me?.maxHealth === "number" &&
+    me.maxHealth > 0
       ? me.maxHealth
       : null;
 
   const pct =
     v != null && m != null
-      ? Math.max(0, Math.min(1, v / m))
+      ? Math.max(
+          0,
+          Math.min(1, v / m),
+        )
       : 0;
 
   const fillY =
-    HEART_BOTTOM - pct * (HEART_BOTTOM - HEART_TOP);
+    HEART_BOTTOM -
+    pct *
+      (HEART_BOTTOM - HEART_TOP);
 
   return (
     <div
       className="heartHud"
-      title={`Health ${Math.round(pct * 100)}%`}
+      title={`Health ${Math.round(
+        pct * 100,
+      )}%`}
     >
-      <svg viewBox="0 0 100 88" aria-hidden="true">
+      <svg
+        viewBox="0 0 100 88"
+        aria-hidden="true"
+      >
         <defs>
           <clipPath id="heartClip">
             <path d={HEART_D} />
@@ -396,7 +528,10 @@ export function HeartHud({ me }: { me: PlayerMe | null }) {
           transform="rotate(30 50 44)"
         />
 
-        <path className="heartBase" d={HEART_D} />
+        <path
+          className="heartBase"
+          d={HEART_D}
+        />
 
         <g clipPath="url(#heartClip)">
           <rect
@@ -408,20 +543,29 @@ export function HeartHud({ me }: { me: PlayerMe | null }) {
           />
         </g>
 
-        <path className="heartLine" d={HEART_D} />
+        <path
+          className="heartLine"
+          d={HEART_D}
+        />
       </svg>
     </div>
   );
 }
 
 function dinoStage(me: PlayerMe): string {
-  if (me.prime?.elder) return "Prime Elder";
+  if (me.prime?.elder)
+    return "Prime Elder";
 
   const g = me.growth ?? 0;
 
-  if (g >= 0.99) return "Adult";
-  if (g >= 0.5) return "Sub-Adult";
-  if (g >= 0.25) return "Juvenile";
+  if (g >= 0.99)
+    return "Adult";
+
+  if (g >= 0.5)
+    return "Sub-Adult";
+
+  if (g >= 0.25)
+    return "Juvenile";
 
   return "Hatchling";
 }
@@ -456,6 +600,7 @@ function DashboardTab({
       >
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
       </svg>
+
       Support
     </button>
   ) : null;
@@ -477,10 +622,14 @@ function DashboardTab({
           <path d="M12 12 21 7M12 12v10M12 12 3 7" />
         </svg>
 
-        <div className="noDataTtl">No live dino</div>
+        <div className="noDataTtl">
+          No live dino
+        </div>
 
         <div className="noDataSub">
-          Spawn in on a server running the IslePilot plugin to see your stats.
+          Spawn in on a server running
+          the IslePilot plugin to see
+          your stats.
         </div>
 
         {supportBtn}
@@ -493,11 +642,18 @@ function DashboardTab({
   const primePct = p
     ? Math.max(
         0,
-        Math.min(100, (p.done / Math.max(1, p.required)) * 100),
+        Math.min(
+          100,
+          (p.done /
+            Math.max(1, p.required)) *
+            100,
+        ),
       )
     : 0;
 
-  const initial = (me.species ?? "?")
+  const initial = (
+    me.species ?? "?"
+  )
     .slice(0, 1)
     .toUpperCase();
 
@@ -505,7 +661,9 @@ function DashboardTab({
     <div className="dash">
       <div className="idCard">
         <div className="avatar">
-          <span className="avatarInitial">{initial}</span>
+          <span className="avatarInitial">
+            {initial}
+          </span>
         </div>
 
         <div className="idMeta">
@@ -516,7 +674,9 @@ function DashboardTab({
 
             {me.female != null ? (
               <span
-                className={`gender ${me.female ? "f" : "m"}`}
+                className={`gender ${
+                  me.female ? "f" : "m"
+                }`}
               >
                 {me.female ? "♀" : "♂"}
               </span>
@@ -524,25 +684,42 @@ function DashboardTab({
           </div>
 
           <div className="idRow">
-            <span className="idKey">Stage</span>
-            <span className="idVal">{dinoStage(me)}</span>
+            <span className="idKey">
+              Stage
+            </span>
+
+            <span className="idVal">
+              {dinoStage(me)}
+            </span>
           </div>
 
           <div className="idRow">
-            <span className="idKey">Server</span>
-            <span className="idVal">{me.server ?? "—"}</span>
+            <span className="idKey">
+              Server
+            </span>
+
+            <span className="idVal">
+              {me.server ?? "—"}
+            </span>
           </div>
 
           <div className="idRow">
-            <span className="idKey">SteamID</span>
-            <span className="idVal mono">{me.steamId}</span>
+            <span className="idKey">
+              SteamID
+            </span>
+
+            <span className="idVal mono">
+              {me.steamId}
+            </span>
           </div>
         </div>
       </div>
 
       {supportBtn}
 
-      <div className="sectionHead">Vitals</div>
+      <div className="sectionHead">
+        Vitals
+      </div>
 
       <div className="vGrid">
         <VitalBar
@@ -580,7 +757,11 @@ function DashboardTab({
         <VitalBar
           icon="growth"
           label="Growth"
-          value={me.growth != null ? me.growth * 100 : null}
+          value={
+            me.growth != null
+              ? me.growth * 100
+              : null
+          }
           max={100}
           color={GROWTH_COLOR}
         />
@@ -588,7 +769,9 @@ function DashboardTab({
 
       {me.nutrition ? (
         <>
-          <div className="sectionHead">Nutrition</div>
+          <div className="sectionHead">
+            Nutrition
+          </div>
 
           <div className="vGrid nut">
             <NutBar
@@ -626,7 +809,9 @@ function DashboardTab({
             <div className="primeTrack">
               <div
                 className="primeFill"
-                style={{ width: `${primePct}%` }}
+                style={{
+                  width: `${primePct}%`,
+                }}
               />
             </div>
 
@@ -637,46 +822,71 @@ function DashboardTab({
               </div>
             ) : (
               <ul className="condList">
-                {p.quests.map((q, i) => (
-                  <li
-                    key={i}
-                    className={q.done ? "condDone" : "condOpen"}
-                  >
-                    <CheckMark done={q.done} />
-                    <span>{q.name}</span>
-                  </li>
-                ))}
+                {p.quests.map(
+                  (q, i) => (
+                    <li
+                      key={i}
+                      className={
+                        q.done
+                          ? "condDone"
+                          : "condOpen"
+                      }
+                    >
+                      <CheckMark
+                        done={q.done}
+                      />
+
+                      <span>
+                        {q.name}
+                      </span>
+                    </li>
+                  ),
+                )}
               </ul>
             )}
           </div>
         </>
       ) : null}
 
-      <div className="sectionHead">Add-ons</div>
+      <div className="sectionHead">
+        Add-ons
+      </div>
 
       <div className="addons">
         <button
           className="addon"
-          onClick={() => onGoto("livemap")}
+          onClick={() =>
+            onGoto("livemap")
+          }
         >
-          <TabIcon name="livemap" /> Live Map
+          <TabIcon name="livemap" />
+          Live Map
         </button>
 
         <button
           className="addon"
-          onClick={() => onGoto("skin")}
+          onClick={() =>
+            onGoto("skin")
+          }
         >
-          <TabIcon name="skin" /> Skin Editor
+          <TabIcon name="skin" />
+          Skin Editor
         </button>
       </div>
     </div>
   );
 }
 
-function CheckMark({ done }: { done: boolean }) {
+function CheckMark({
+  done,
+}: {
+  done: boolean;
+}) {
   return (
     <span
-      className={`mark ${done ? "ok" : "no"}`}
+      className={`mark ${
+        done ? "ok" : "no"
+      }`}
       aria-hidden="true"
     >
       <svg
@@ -728,11 +938,18 @@ function PageDropdown({
       <select
         className="pageSelect"
         value={tab}
-        onChange={(e) => onChange(e.target.value as TabKey)}
+        onChange={(e) =>
+          onChange(
+            e.target.value as TabKey,
+          )
+        }
         aria-label="Select page"
       >
         {availableTabs.map((t) => (
-          <option key={t.key} value={t.key}>
+          <option
+            key={t.key}
+            value={t.key}
+          >
             {t.label}
           </option>
         ))}
@@ -779,9 +996,14 @@ export function MainWindow({
   onSettings: () => void;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<TabKey>("profile");
-  const [mapEditAdmin, setMapEditAdmin] = useState(false);
-  const [adminModeOn, setAdminModeOn] = useState(false);
+  const [tab, setTab] =
+    useState<TabKey>("profile");
+
+  const [mapEditAdmin, setMapEditAdmin] =
+    useState(false);
+
+  const [adminModeOn, setAdminModeOn] =
+    useState(false);
 
   const savedLayout =
     settings?.layout as
@@ -797,37 +1019,52 @@ export function MainWindow({
     typeof saved.x === "number"
       ? {
           x: saved.x,
-          y: typeof saved.y === "number" ? saved.y : 70,
+          y:
+            typeof saved.y === "number"
+              ? saved.y
+              : 70,
         }
-      : { x: 140, y: 70 };
+      : {
+          x: 140,
+          y: 70,
+        };
 
   const savedSize =
     saved &&
     "width" in saved &&
     typeof saved.width === "number"
       ? {
-          width: saved.width,
+          width: Math.max(
+            MIN_SIZE.width,
+            saved.width,
+          ),
           height:
-            typeof saved.height === "number"
-              ? saved.height
+            typeof saved.height ===
+              "number"
+              ? Math.max(
+                  MIN_SIZE.height,
+                  saved.height,
+                )
               : DEFAULT_SIZE.height,
         }
       : DEFAULT_SIZE;
 
-  const [pos, setPos] = useState<Pos>(savedPos);
-  const [size, setSize] = useState<Size>(savedSize);
-  const [size, setSize] = useState({
-  width: settings?.mainWidth ?? 720,
-  height: settings?.mainHeight ?? 620,
-});
+  const [pos, setPos] =
+    useState<Pos>(savedPos);
 
-  const off = useRef<Pos | null>(null);
-  const resizeStart = useRef<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
+  const [size, setSize] =
+    useState<Size>(savedSize);
+
+  const off =
+    useRef<Pos | null>(null);
+
+  const resizeStart =
+    useRef<{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    } | null>(null);
 
   useEffect(() => {
     if (
@@ -843,17 +1080,6 @@ export function MainWindow({
             : 70,
       });
     }
-	useEffect(() => {
-  if (
-    typeof settings?.mainWidth === "number" &&
-    typeof settings?.mainHeight === "number"
-  ) {
-    setSize({
-      width: settings.mainWidth,
-      height: settings.mainHeight,
-    });
-  }
-}, [settings?.mainWidth, settings?.mainHeight]);
 
     if (
       saved &&
@@ -861,18 +1087,40 @@ export function MainWindow({
       typeof saved.width === "number"
     ) {
       setSize({
-        width: Math.max(MIN_SIZE.width, saved.width),
+        width: Math.max(
+          MIN_SIZE.width,
+          saved.width,
+        ),
         height:
-          typeof saved.height === "number"
-            ? Math.max(MIN_SIZE.height, saved.height)
+          typeof saved.height ===
+            "number"
+            ? Math.max(
+                MIN_SIZE.height,
+                saved.height,
+              )
             : DEFAULT_SIZE.height,
       });
     }
   }, [
-    saved && "x" in saved ? saved.x : undefined,
-    saved && "y" in saved ? saved.y : undefined,
-    saved && "width" in saved ? saved.width : undefined,
-    saved && "height" in saved ? saved.height : undefined,
+    saved &&
+    "x" in saved
+      ? saved.x
+      : undefined,
+
+    saved &&
+    "y" in saved
+      ? saved.y
+      : undefined,
+
+    saved &&
+    "width" in saved
+      ? saved.width
+      : undefined,
+
+    saved &&
+    "height" in saved
+      ? saved.height
+      : undefined,
   ]);
 
   useEffect(() => {
@@ -888,19 +1136,28 @@ export function MainWindow({
         const r =
           (await window.isleOverlay.apiGet(
             "/api/overlay/mapedit/access",
-          )) as { admin?: boolean } | null;
+          )) as {
+            admin?: boolean;
+          } | null;
 
         if (alive) {
-          setMapEditAdmin(r?.admin === true);
+          setMapEditAdmin(
+            r?.admin === true,
+          );
         }
       } catch {
-        if (alive) setMapEditAdmin(false);
+        if (alive) {
+          setMapEditAdmin(false);
+        }
       }
     };
 
     void check();
 
-    const iv = setInterval(check, 10000);
+    const iv = setInterval(
+      check,
+      10000,
+    );
 
     return () => {
       alive = false;
@@ -921,19 +1178,28 @@ export function MainWindow({
         const r =
           (await window.isleOverlay.apiGet(
             "/api/overlay/admin/access",
-          )) as { enabled?: boolean } | null;
+          )) as {
+            enabled?: boolean;
+          } | null;
 
         if (alive) {
-          setAdminModeOn(r?.enabled === true);
+          setAdminModeOn(
+            r?.enabled === true,
+          );
         }
       } catch {
-        if (alive) setAdminModeOn(false);
+        if (alive) {
+          setAdminModeOn(false);
+        }
       }
     };
 
     void check();
 
-    const iv = setInterval(check, 15000);
+    const iv = setInterval(
+      check,
+      15000,
+    );
 
     return () => {
       alive = false;
@@ -942,14 +1208,24 @@ export function MainWindow({
   }, [authed, me?.hasData]);
 
   useEffect(() => {
-    if (tab === "mapedit" && !mapEditAdmin) {
+    if (
+      tab === "mapedit" &&
+      !mapEditAdmin
+    ) {
       setTab("profile");
     }
 
-    if (tab === "admin" && !adminModeOn) {
+    if (
+      tab === "admin" &&
+      !adminModeOn
+    ) {
       setTab("profile");
     }
-  }, [tab, mapEditAdmin, adminModeOn]);
+  }, [
+    tab,
+    mapEditAdmin,
+    adminModeOn,
+  ]);
 
   useEffect(() => {
     if (focusSupportSignal > 0) {
@@ -957,32 +1233,43 @@ export function MainWindow({
     }
   }, [focusSupportSignal]);
 
-  const availableTabs = TABS.filter(
-    (t) =>
-      (t.key !== "mapedit" || mapEditAdmin) &&
-      (t.key !== "admin" || adminModeOn),
-  );
+  const availableTabs =
+    TABS.filter(
+      (t) =>
+        (t.key !== "mapedit" ||
+          mapEditAdmin) &&
+        (t.key !== "admin" ||
+          adminModeOn),
+    );
 
   const saveLayout = (
     newPos: Pos,
     newSize: Size,
   ) => {
-    void window.isleOverlay.getSettings().then((s) => {
-      void window.isleOverlay.setSettings({
-        layout: {
-          ...(s.layout || {}),
-          main: {
-            ...newPos,
-            ...newSize,
+    void window.isleOverlay
+      .getSettings()
+      .then((s) => {
+        void window.isleOverlay.setSettings(
+          {
+            layout: {
+              ...(s.layout || {}),
+              main: {
+                ...newPos,
+                ...newSize,
+              },
+            },
           },
-        },
+        );
       });
-    });
   };
 
-  const onDown = (e: React.MouseEvent) => {
+  const onDown = (
+    e: React.MouseEvent,
+  ) => {
     if (
-      !(e.target as HTMLElement).closest(".dragHandle")
+      !(e.target as HTMLElement).closest(
+        ".dragHandle",
+      )
     ) {
       return;
     }
@@ -996,7 +1283,9 @@ export function MainWindow({
 
     lockInteract();
 
-    const move = (ev: MouseEvent) => {
+    const move = (
+      ev: MouseEvent,
+    ) => {
       if (!off.current) return;
 
       setPos({
@@ -1004,22 +1293,32 @@ export function MainWindow({
           0,
           Math.min(
             window.innerWidth - 160,
-            ev.clientX - off.current.x,
+            ev.clientX -
+              off.current.x,
           ),
         ),
+
         y: Math.max(
           0,
           Math.min(
             window.innerHeight - 46,
-            ev.clientY - off.current.y,
+            ev.clientY -
+              off.current.y,
           ),
         ),
       });
     };
 
     const up = () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
+      window.removeEventListener(
+        "mousemove",
+        move,
+      );
+
+      window.removeEventListener(
+        "mouseup",
+        up,
+      );
 
       off.current = null;
       unlockInteract();
@@ -1030,57 +1329,26 @@ export function MainWindow({
       });
     };
 
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
-  const onResizeDown = (e: React.MouseEvent) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  const startX = e.clientX;
-  const startY = e.clientY;
-  const startWidth = size.width;
-  const startHeight = size.height;
-
-  lockInteract();
-
-  const move = (ev: MouseEvent) => {
-    const newWidth = Math.max(
-      560,
-      Math.min(1200, startWidth + (ev.clientX - startX))
+    window.addEventListener(
+      "mousemove",
+      move,
     );
 
-    const newHeight = Math.max(
-      420,
-      Math.min(900, startHeight + (ev.clientY - startY))
+    window.addEventListener(
+      "mouseup",
+      up,
     );
-
-    setSize({
-      width: newWidth,
-      height: newHeight,
-    });
   };
 
-  const up = () => {
-    window.removeEventListener("mousemove", move);
-    window.removeEventListener("mouseup", up);
-    unlockInteract();
-
-    setSize((current) => {
-      void window.isleOverlay.setSettings({
-        mainWidth: current.width,
-        mainHeight: current.height,
-      });
-
-      return current;
-    });
-  };
-
-  window.addEventListener("mousemove", move);
-  window.addEventListener("mouseup", up);
-};
-
-  const onResizeDown = (e: React.MouseEvent) => {
+  /*
+   * MAIN WINDOW RESIZE
+   *
+   * This is the ONLY resize handler.
+   * Do not add another onResizeDown.
+   */
+  const onResizeDown = (
+    e: React.MouseEvent,
+  ) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -1093,8 +1361,11 @@ export function MainWindow({
 
     lockInteract();
 
-    const move = (ev: MouseEvent) => {
-      const start = resizeStart.current;
+    const move = (
+      ev: MouseEvent,
+    ) => {
+      const start =
+        resizeStart.current;
 
       if (!start) return;
 
@@ -1102,7 +1373,8 @@ export function MainWindow({
         MIN_SIZE.width,
         Math.min(
           window.innerWidth - pos.x,
-          start.width + (ev.clientX - start.x),
+          start.width +
+            (ev.clientX - start.x),
         ),
       );
 
@@ -1110,7 +1382,8 @@ export function MainWindow({
         MIN_SIZE.height,
         Math.min(
           window.innerHeight - pos.y,
-          start.height + (ev.clientY - start.y),
+          start.height +
+            (ev.clientY - start.y),
         ),
       );
 
@@ -1121,8 +1394,15 @@ export function MainWindow({
     };
 
     const up = () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
+      window.removeEventListener(
+        "mousemove",
+        move,
+      );
+
+      window.removeEventListener(
+        "mouseup",
+        up,
+      );
 
       resizeStart.current = null;
       unlockInteract();
@@ -1133,20 +1413,31 @@ export function MainWindow({
       });
     };
 
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
+    window.addEventListener(
+      "mousemove",
+      move,
+    );
+
+    window.addEventListener(
+      "mouseup",
+      up,
+    );
   };
 
   const holdInteract = () => {
     if (!isInteractLocked()) {
-      void window.isleOverlay.setMouseIgnore(false);
+      void window.isleOverlay.setMouseIgnore(
+        false,
+      );
     }
   };
 
   const statusText = me?.hasData
     ? `${me.species ?? "Unknown"}${
         me.growth != null
-          ? ` · ${Math.round(me.growth * 100)}%`
+          ? ` · ${Math.round(
+              me.growth * 100,
+            )}%`
           : ""
       }`
     : authed
@@ -1154,17 +1445,17 @@ export function MainWindow({
       : "signed out";
 
   return (
-<div
-  className="mainWin interactive-region"
-  style={{
-    left: pos.x,
-    top: pos.y,
-    width: size.width,
-    height: size.height,
-  }}
-  onMouseDown={onDown}
-  onMouseMove={holdInteract}
->
+    <div
+      className="mainWin interactive-region"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        width: size.width,
+        height: size.height,
+      }}
+      onMouseDown={onDown}
+      onMouseMove={holdInteract}
+    >
       <div className="topbar dragHandle">
         <span className="brand">
           <svg
@@ -1181,6 +1472,7 @@ export function MainWindow({
               strokeWidth="1.6"
               strokeLinejoin="round"
             />
+
             <path
               d="M12 7 16 9.5v5L12 17l-4-2.5v-5L12 7Z"
               fill="currentColor"
@@ -1191,12 +1483,16 @@ export function MainWindow({
             TheObsidianIsle
           </span>
 
-          <span className="brandSep">/</span>
+          <span className="brandSep">
+            /
+          </span>
         </span>
 
         <PageDropdown
           tab={tab}
-          availableTabs={availableTabs}
+          availableTabs={
+            availableTabs
+          }
           onChange={setTab}
         />
 
@@ -1206,22 +1502,28 @@ export function MainWindow({
               me?.hasData ? "on" : ""
             }`}
           />
+
           {statusText}
         </span>
 
         {ticketUnread > 0 ? (
           <button
             className={`envelopeBtn interactive-region ${
-              ticketUrgent ? "urgent" : ""
+              ticketUrgent
+                ? "urgent"
+                : ""
             }`}
             title={`${ticketUnread} unread ticket ${
               ticketUnread === 1
                 ? "message"
                 : "messages"
             }`}
-            onClick={() => setTab("admin")}
+            onClick={() =>
+              setTab("admin")
+            }
           >
             ✉
+
             <span className="envelopeCount">
               {ticketUnread}
             </span>
@@ -1248,7 +1550,12 @@ export function MainWindow({
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <circle cx="12" cy="12" r="3" />
+            <circle
+              cx="12"
+              cy="12"
+              r="3"
+            />
+
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
           </svg>
         </button>
@@ -1271,10 +1578,6 @@ export function MainWindow({
             <path d="M6 6 18 18M18 6 6 18" />
           </svg>
         </button>
-		<div
-  className="mainResizeHandle"
-  onMouseDown={onResizeDown}
-/>
       </div>
 
       {!authed ? (
@@ -1293,6 +1596,7 @@ export function MainWindow({
               strokeWidth="1.4"
               strokeLinejoin="round"
             />
+
             <path
               d="M12 7 16 9.5v5L12 17l-4-2.5v-5L12 7Z"
               fill="currentColor"
@@ -1305,8 +1609,9 @@ export function MainWindow({
           </div>
 
           <div className="gateSub">
-            Log in with Steam to load your dino stats,
-            garage, skins and the live map.
+            Log in with Steam to load
+            your dino stats, garage,
+            skins and the live map.
           </div>
 
           <button
@@ -1337,7 +1642,9 @@ export function MainWindow({
               me={me}
               theme={theme}
               onGoto={setTab}
-              supportOn={adminModeOn}
+              supportOn={
+                adminModeOn
+              }
             />
           ) : tab === "livemap" ? (
             <LiveMapTab
@@ -1354,12 +1661,14 @@ export function MainWindow({
               authed={authed}
               onLogin={onLogin}
             />
-          ) : tab === "mapedit" && mapEditAdmin ? (
+          ) : tab === "mapedit" &&
+            mapEditAdmin ? (
             <MapEditorTab
               authed={authed}
               onLogin={onLogin}
             />
-          ) : tab === "admin" && adminModeOn ? (
+          ) : tab === "admin" &&
+            adminModeOn ? (
             <AdminTab
               authed={authed}
               onLogin={onLogin}
