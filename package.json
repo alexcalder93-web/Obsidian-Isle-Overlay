@@ -86,7 +86,7 @@
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "artifactName": "TheObsidianIsle-Overlay.exe"
+      "artifactName": "TheObsidianIsle-Overlay-${version}.exe"
     },
     "copyright": "IslePilot",
 "publish": [
