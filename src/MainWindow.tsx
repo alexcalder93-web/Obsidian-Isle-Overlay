@@ -137,13 +137,9 @@ const STAT_ICONS: Record<string, ReactNode> = {
     <path d="M12 3s6 6.4 6 10.5a6 6 0 0 1-12 0C6 9.4 12 3 12 3Z" />
   ),
 
-  growth: (
-    <>
-      <path d="M12 21v-9" />
-      <path d="M12 12c0-2.8 2.2-5 5-5 0 2.8-2.2 5-5 5Z" />
-      <path d="M12 14c0-2.2-1.8-4-4-4 0 2.2 1.8 4 4 4Z" />
-    </>
-  ),
+growth: (
+  <path d="M12 21V11c0-3.8 2.5-6.6 6-7-1.2 3.8-2.9 6.3-6 7v10ZM12 16c-2.6-.3-4.3-1.9-5-5 2.9.3 5 2.2 5 5Z"/>
+),
 };
 
 function TabIcon({ name }: { name: TabKey }) {
@@ -165,24 +161,20 @@ function TabIcon({ name }: { name: TabKey }) {
 }
 
 export function StatGlyph({ name }: { name: string }) {
-  const fill = name === "health" || name === "thirst";
-
   return (
     <svg
       viewBox="0 0 24 24"
       width="14"
       height="14"
-      fill={fill ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth={fill ? 0 : 1.7}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="currentColor"
+      stroke="none"
       aria-hidden="true"
     >
       {STAT_ICONS[name]}
     </svg>
   );
 }
+
 function StatFillIcon({
   icon,
   percent,
@@ -190,21 +182,39 @@ function StatFillIcon({
   icon: string;
   percent: number;
 }) {
-  const fillY = 24 - (24 * percent) / 100;
-  const clipId = `clip-${icon}`;
+  const safePercent = Math.max(0, Math.min(100, percent));
+  const fillY = 24 - (24 * safePercent) / 100;
+  const clipId = `stat-fill-${icon}`;
 
   return (
-    <svg viewBox="0 0 24 24">
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <defs>
         <clipPath id={clipId}>
-          {STAT_ICONS[icon]}
+          <g fill="currentColor" stroke="currentColor">
+            {STAT_ICONS[icon]}
+          </g>
         </clipPath>
       </defs>
 
-      <g color="rgba(255,255,255,.15)">
+      {/* Empty icon */}
+      <g
+        fill="rgba(255,255,255,0.12)"
+        stroke="rgba(255,255,255,0.18)"
+      >
         {STAT_ICONS[icon]}
       </g>
 
+      {/* Percentage fill */}
       <g clipPath={`url(#${clipId})`}>
         <rect
           x="0"
@@ -215,7 +225,14 @@ function StatFillIcon({
         />
       </g>
 
-      <g color="currentColor">
+      {/* Icon outline */}
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         {STAT_ICONS[icon]}
       </g>
     </svg>

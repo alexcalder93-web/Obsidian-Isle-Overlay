@@ -1,7 +1,7 @@
 {
   "name": "isle-overlay",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "TheObsidianIsle in-game overlay",
   "author": "YannikAufDie1",
   "type": "module",
