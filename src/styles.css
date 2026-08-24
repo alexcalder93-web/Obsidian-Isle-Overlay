@@ -2031,10 +2031,23 @@ button {
   font-size: 9px;
 }
 
-.hud.statsWidget {
-  width: 200px;
+/* ==========================================================================
+   FLOATING STATS
+   ========================================================================== */
 
-  padding: 11px 12px 12px;
+.floatingStat {
+  width: 74px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+
+  cursor: grab;
+  user-select: none;
+}
+
+.floatingStat:active {
+  cursor: grabbing;
 }
 
 .hudTitle {

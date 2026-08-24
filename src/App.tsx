@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isInteractLocked, lockInteract, unlockInteract } from "./interaction";
-import { HeartHud, MainWindow, StatsWidget } from "./MainWindow";
+import { HeartHud, MainWindow, MiniStat } from "./MainWindow";
 import { RadarPanel } from "./RadarPanel";
 import { TrollLayer } from "./TrollLayer";
 import { ColorSwatch } from "./ColorPicker";
@@ -842,11 +842,79 @@ export function App() {
         />
       ) : null}
 
-      {auth.authed && panels.stats && isDino ? (
-        <DraggablePanel id="w_stats" defaultPos={{ x: 18, y: 240 }} settings={settings}>
-          <StatsWidget me={view} theme={theme} />
-        </DraggablePanel>
-      ) : null}
+{auth.authed && panels.stats && isDino ? (
+  <>
+    <DraggablePanel
+      id="w_health"
+      defaultPos={{ x: 18, y: 240 }}
+      settings={settings}
+    >
+      <MiniStat
+        icon="health"
+        label="Health"
+        value={view?.health}
+        max={view?.maxHealth}
+        color={theme.stat.health}
+      />
+    </DraggablePanel>
+
+    <DraggablePanel
+      id="w_stamina"
+      defaultPos={{ x: 18, y: 330 }}
+      settings={settings}
+    >
+      <MiniStat
+        icon="stamina"
+        label="Stamina"
+        value={view?.stamina}
+        max={view?.maxStamina}
+        color={theme.stat.stamina}
+      />
+    </DraggablePanel>
+
+    <DraggablePanel
+      id="w_hunger"
+      defaultPos={{ x: 18, y: 420 }}
+      settings={settings}
+    >
+      <MiniStat
+        icon="hunger"
+        label="Hunger"
+        value={view?.hunger}
+        max={view?.maxHunger}
+        color={theme.stat.food}
+      />
+    </DraggablePanel>
+
+    <DraggablePanel
+      id="w_thirst"
+      defaultPos={{ x: 18, y: 510 }}
+      settings={settings}
+    >
+      <MiniStat
+        icon="thirst"
+        label="Thirst"
+        value={view?.thirst}
+        max={view?.maxThirst}
+        color={theme.stat.water}
+      />
+    </DraggablePanel>
+
+    <DraggablePanel
+      id="w_growth"
+      defaultPos={{ x: 18, y: 600 }}
+      settings={settings}
+    >
+      <MiniStat
+        icon="growth"
+        label="Growth"
+        value={view?.growth != null ? view.growth * 100 : null}
+        max={100}
+        color="#4ade80"
+      />
+    </DraggablePanel>
+  </>
+) : null}
 
       {auth.authed && panels.prime && isDino ? (
         <DraggablePanel id="w_prime" defaultPos={{ x: 18, y: 470 }} settings={settings}>

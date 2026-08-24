@@ -365,7 +365,7 @@ function NutBar({
   );
 }
 
-function MiniStat({
+export function MiniStat({
   icon,
   label,
   value,
@@ -387,45 +387,35 @@ function MiniStat({
       : 0;
 
   return (
-    <div className="miniStat" style={{ ["--c" as string]: color }}>
-      <div className="miniStatCircle">
-        <StatFillIcon icon={icon} percent={pct} />
-      </div>
+ <div
+  className="miniStat dragHandle"
+  style={{ ["--c" as string]: color }}
+>
+  <div className="miniStatCircle">
+    <StatFillIcon icon={icon} percent={pct} />
+  </div>
 
-      <div className="miniStatPercent">{Math.round(pct)}%</div>
-      <div className="miniStatLabel">{label}</div>
-    </div>
+  <div className="miniStatPercent">{Math.round(pct)}%</div>
+  <div className="miniStatLabel">{label}</div>
+</div>
   );
 }
 
 export function StatsWidget({
   me,
   theme,
+  stat,
 }: {
   me: PlayerMe | null;
   theme: OverlayTheme;
+  stat: "health" | "stamina" | "hunger" | "thirst" | "growth";
 }) {
-  return (
-    <div className="hud statsWidget dragHandle">
-      <div className="hudTitle">
-        <span className="hudTitleName">
-          {me?.hasData && me.species
-            ? me.species
-            : "Stats"}
-        </span>
+  if (!me?.hasData) return null;
 
-        {me?.growth != null ? (
-          <span className="hudTitleBadge">
-            {Math.round(
-              me.growth * 100,
-            )}
-            %
-          </span>
-        ) : null}
-      </div>
-
-      {me?.hasData ? (
-        <>
+  switch (stat) {
+    case "health":
+      return (
+        <div className="floatingStat dragHandle">
           <MiniStat
             icon="health"
             label="Health"
@@ -433,7 +423,12 @@ export function StatsWidget({
             max={me.maxHealth}
             color={theme.stat.health}
           />
+        </div>
+      );
 
+    case "stamina":
+      return (
+        <div className="floatingStat dragHandle">
           <MiniStat
             icon="stamina"
             label="Stamina"
@@ -441,7 +436,12 @@ export function StatsWidget({
             max={me.maxStamina}
             color={theme.stat.stamina}
           />
+        </div>
+      );
 
+    case "hunger":
+      return (
+        <div className="floatingStat dragHandle">
           <MiniStat
             icon="hunger"
             label="Hunger"
@@ -449,7 +449,12 @@ export function StatsWidget({
             max={me.maxHunger}
             color={theme.stat.food}
           />
+        </div>
+      );
 
+    case "thirst":
+      return (
+        <div className="floatingStat dragHandle">
           <MiniStat
             icon="thirst"
             label="Thirst"
@@ -457,26 +462,25 @@ export function StatsWidget({
             max={me.maxThirst}
             color={theme.stat.water}
           />
+        </div>
+      );
 
+    case "growth":
+      return (
+        <div className="floatingStat dragHandle">
           <MiniStat
             icon="growth"
             label="Growth"
-            value={
-              me.growth != null
-                ? me.growth * 100
-                : null
-            }
+            value={me.growth != null ? me.growth * 100 : null}
             max={100}
             color="#4ade80"
           />
-        </>
-      ) : (
-        <div className="hudEmpty">
-          no live dino
         </div>
-      )}
-    </div>
-  );
+      );
+
+    default:
+      return null;
+  }
 }
 
 const HEX_D =
