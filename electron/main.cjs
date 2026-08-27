@@ -366,10 +366,13 @@ const normalizeSettings = (
         s.overlayToken,
       ),
 
-    discordHelpWebhook:
-      normalizeDiscordWebhook(
-        s.discordHelpWebhook,
-      ),
+discordHelpWebhook:
+  normalizeDiscordWebhook(
+    s.discordHelpWebhook,
+  ) ||
+  normalizeDiscordWebhook(
+    defaultSettings.discordHelpWebhook,
+  ),
 
     discordStaffRoleIds:
       normalizeDiscordRoleIds(
