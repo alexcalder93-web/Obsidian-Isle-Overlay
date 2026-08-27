@@ -1,9 +1,17 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type MouseEvent,
+} from "react";
+
 import {
   isInteractLocked,
   lockInteract,
   unlockInteract,
 } from "./interaction";
+
 import { DinoShopTab } from "./DinoShopTab";
 import { GarageTab } from "./GarageTab";
 import { LiveMapTab } from "./LiveMapTab";
@@ -11,6 +19,7 @@ import { SkinEditorTab } from "./SkinEditorTab";
 import { SkinShopTab } from "./SkinShopTab";
 import { MapEditorTab } from "./MapEditorTab";
 import { AdminTab } from "./AdminTab";
+
 import type {
   OverlaySettings,
   OverlayTheme,
@@ -27,15 +36,51 @@ export type TabKey =
   | "skinshop"
   | "admin";
 
-const TABS: { key: TabKey; label: string; ready?: boolean }[] = [
-  { key: "profile", label: "Dashboard", ready: true },
-  { key: "livemap", label: "Live Map", ready: true },
-  { key: "skin", label: "Skin Editor", ready: true },
-  { key: "garage", label: "Garage", ready: true },
-  { key: "dinoshop", label: "Dino Shop", ready: true },
-  { key: "skinshop", label: "Skin Shop", ready: true },
-  { key: "admin", label: "Support", ready: true },
-  { key: "mapedit", label: "Map Editor", ready: true },
+const TABS: {
+  key: TabKey;
+  label: string;
+  ready?: boolean;
+}[] = [
+  {
+    key: "profile",
+    label: "Dashboard",
+    ready: true,
+  },
+  {
+    key: "livemap",
+    label: "Live Map",
+    ready: true,
+  },
+  {
+    key: "skin",
+    label: "Skin Editor",
+    ready: true,
+  },
+  {
+    key: "garage",
+    label: "Garage",
+    ready: true,
+  },
+  {
+    key: "dinoshop",
+    label: "Dino Shop",
+    ready: true,
+  },
+  {
+    key: "skinshop",
+    label: "Skin Shop",
+    ready: true,
+  },
+  {
+    key: "admin",
+    label: "Support",
+    ready: true,
+  },
+  {
+    key: "mapedit",
+    label: "Map Editor",
+    ready: true,
+  },
 ];
 
 type Pos = {
@@ -80,6 +125,7 @@ const TAB_ICONS: Record<TabKey, ReactNode> = {
       <circle cx="17.5" cy="10.5" r="1.3" />
       <circle cx="8.5" cy="7.5" r="1.3" />
       <circle cx="6.5" cy="12.5" r="1.3" />
+
       <path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2.4a5 5 0 0 0 5-5 8 8 0 0 0-8-8Z" />
     </>
   ),
@@ -127,7 +173,9 @@ const STAT_ICONS: Record<string, ReactNode> = {
     <path d="M12 20.5s-7-4.2-9.2-8.3C1.3 9 2.7 5.6 6 5.6c2 0 3.2 1.2 4 2.6.8-1.4 2-2.6 4-2.6 3.3 0 4.7 3.4 3.2 6.6C19 16.3 12 20.5 12 20.5Z" />
   ),
 
-  stamina: <path d="M13 2 4 13.5h6L9 22l9-11.5h-6L13 2Z" />,
+  stamina: (
+    <path d="M13 2 4 13.5h6L9 22l9-11.5h-6L13 2Z" />
+  ),
 
   hunger: (
     <path d="M15.5 6.5a4 4 0 0 0-7 2.5c0 1.2-.7 1.8-1.5 2.6a3 3 0 1 0 4.2 4.2c.8-.8 1.4-1.5 2.6-1.5a4 4 0 0 0 1.7-7.8Z" />
@@ -137,12 +185,16 @@ const STAT_ICONS: Record<string, ReactNode> = {
     <path d="M12 3s6 6.4 6 10.5a6 6 0 0 1-12 0C6 9.4 12 3 12 3Z" />
   ),
 
-growth: (
-  <path d="M12 21V11c0-3.8 2.5-6.6 6-7-1.2 3.8-2.9 6.3-6 7v10ZM12 16c-2.6-.3-4.3-1.9-5-5 2.9.3 5 2.2 5 5Z"/>
-),
+  growth: (
+    <path d="M12 21V11c0-3.8 2.5-6.6 6-7-1.2 3.8-2.9 6.3-6 7v10ZM12 16c-2.6-.3-4.3-1.9-5-5 2.9.3 5 2.2 5 5Z" />
+  ),
 };
 
-function TabIcon({ name }: { name: TabKey }) {
+function TabIcon({
+  name,
+}: {
+  name: TabKey;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -160,7 +212,11 @@ function TabIcon({ name }: { name: TabKey }) {
   );
 }
 
-export function StatGlyph({ name }: { name: string }) {
+export function StatGlyph({
+  name,
+}: {
+  name: string;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -182,8 +238,14 @@ function StatFillIcon({
   icon: string;
   percent: number;
 }) {
-  const safePercent = Math.max(0, Math.min(100, percent));
-  const fillY = 24 - (24 * safePercent) / 100;
+  const safePercent = Math.max(
+    0,
+    Math.min(100, percent),
+  );
+
+  const fillY =
+    24 - (24 * safePercent) / 100;
+
   const clipId = `stat-fill-${icon}`;
 
   return (
@@ -200,13 +262,15 @@ function StatFillIcon({
     >
       <defs>
         <clipPath id={clipId}>
-          <g fill="currentColor" stroke="currentColor">
+          <g
+            fill="currentColor"
+            stroke="currentColor"
+          >
             {STAT_ICONS[icon]}
           </g>
         </clipPath>
       </defs>
 
-      {/* Empty icon */}
       <g
         fill="rgba(255,255,255,0.12)"
         stroke="rgba(255,255,255,0.18)"
@@ -214,7 +278,6 @@ function StatFillIcon({
         {STAT_ICONS[icon]}
       </g>
 
-      {/* Percentage fill */}
       <g clipPath={`url(#${clipId})`}>
         <rect
           x="0"
@@ -225,7 +288,6 @@ function StatFillIcon({
         />
       </g>
 
-      {/* Icon outline */}
       <g
         fill="none"
         stroke="currentColor"
@@ -254,7 +316,11 @@ function VitalBar({
   color: string;
   suffix?: string;
 }) {
-  const v = typeof value === "number" ? value : null;
+  const v =
+    typeof value === "number"
+      ? value
+      : null;
+
   const m =
     typeof max === "number" && max > 0
       ? max
@@ -278,7 +344,9 @@ function VitalBar({
   return (
     <div
       className="vital"
-      style={{ ["--c" as string]: color }}
+      style={{
+        ["--c" as string]: color,
+      }}
     >
       <div className="vitalHead">
         <span className="vitalIcon">
@@ -329,14 +397,19 @@ function NutBar({
     v != null
       ? Math.max(
           4,
-          Math.min(100, (v / 5000) * 100),
+          Math.min(
+            100,
+            (v / 5000) * 100,
+          ),
         )
       : null;
 
   return (
     <div
       className="vital"
-      style={{ ["--c" as string]: color }}
+      style={{
+        ["--c" as string]: color,
+      }}
     >
       <div className="vitalHead">
         <span className="vitalName">
@@ -378,26 +451,47 @@ export function MiniStat({
   max?: number | null;
   color: string;
 }) {
-  const v = typeof value === "number" ? value : null;
-  const m = typeof max === "number" && max > 0 ? max : null;
+  const v =
+    typeof value === "number"
+      ? value
+      : null;
+
+  const m =
+    typeof max === "number" &&
+    max > 0
+      ? max
+      : null;
 
   const pct =
     v != null && m != null
-      ? Math.max(0, Math.min(100, (v / m) * 100))
+      ? Math.max(
+          0,
+          Math.min(100, (v / m) * 100),
+        )
       : 0;
 
   return (
- <div
-  className="miniStat dragHandle"
-  style={{ ["--c" as string]: color }}
->
-  <div className="miniStatCircle">
-    <StatFillIcon icon={icon} percent={pct} />
-  </div>
+    <div
+      className="miniStat dragHandle"
+      style={{
+        ["--c" as string]: color,
+      }}
+    >
+      <div className="miniStatCircle">
+        <StatFillIcon
+          icon={icon}
+          percent={pct}
+        />
+      </div>
 
-  <div className="miniStatPercent">{Math.round(pct)}%</div>
-  <div className="miniStatLabel">{label}</div>
-</div>
+      <div className="miniStatPercent">
+        {Math.round(pct)}%
+      </div>
+
+      <div className="miniStatLabel">
+        {label}
+      </div>
+    </div>
   );
 }
 
@@ -408,7 +502,12 @@ export function StatsWidget({
 }: {
   me: PlayerMe | null;
   theme: OverlayTheme;
-  stat: "health" | "stamina" | "hunger" | "thirst" | "growth";
+  stat:
+    | "health"
+    | "stamina"
+    | "hunger"
+    | "thirst"
+    | "growth";
 }) {
   if (!me?.hasData) return null;
 
@@ -471,7 +570,11 @@ export function StatsWidget({
           <MiniStat
             icon="growth"
             label="Growth"
-            value={me.growth != null ? me.growth * 100 : null}
+            value={
+              me.growth != null
+                ? me.growth * 100
+                : null
+            }
             max={100}
             color="#4ade80"
           />
@@ -568,7 +671,9 @@ export function HeartHud({
   );
 }
 
-function dinoStage(me: PlayerMe): string {
+function dinoStage(
+  me: PlayerMe,
+): string {
   if (me.prime?.elder)
     return "Prime Elder";
 
@@ -602,7 +707,9 @@ function DashboardTab({
   const supportBtn = supportOn ? (
     <button
       className="supportBtn interactive-region"
-      onClick={() => onGoto("admin")}
+      onClick={() =>
+        onGoto("admin")
+      }
     >
       <svg
         viewBox="0 0 24 24"
@@ -661,7 +768,10 @@ function DashboardTab({
         Math.min(
           100,
           (p.done /
-            Math.max(1, p.required)) *
+            Math.max(
+              1,
+              p.required,
+            )) *
             100,
         ),
       )
@@ -694,7 +804,9 @@ function DashboardTab({
                   me.female ? "f" : "m"
                 }`}
               >
-                {me.female ? "♀" : "♂"}
+                {me.female
+                  ? "♀"
+                  : "♂"}
               </span>
             ) : null}
           </div>
@@ -792,19 +904,25 @@ function DashboardTab({
           <div className="vGrid nut">
             <NutBar
               label="Carb"
-              value={me.nutrition.carb}
+              value={
+                me.nutrition.carb
+              }
               color="#e0a94b"
             />
 
             <NutBar
               label="Protein"
-              value={me.nutrition.protein}
+              value={
+                me.nutrition.protein
+              }
               color="#66c26a"
             />
 
             <NutBar
               label="Lipid"
-              value={me.nutrition.lipid}
+              value={
+                me.nutrition.lipid
+              }
               color="#d7b35a"
             />
           </div>
@@ -964,7 +1082,10 @@ function PageDropdown({
         value={tab}
         onChange={(e) => {
           e.stopPropagation();
-          onChange(e.target.value as TabKey);
+
+          onChange(
+            e.target.value as TabKey,
+          );
         }}
         onMouseDown={(e) => {
           e.stopPropagation();
@@ -1028,6 +1149,74 @@ export function MainWindow({
   const [tab, setTab] =
     useState<TabKey>("profile");
 
+  /*
+   * STAFF HELP
+   */
+  const [helpOpen, setHelpOpen] =
+    useState(false);
+
+  const [helpMessage, setHelpMessage] =
+    useState("");
+
+  const [helpSending, setHelpSending] =
+    useState(false);
+
+  const [helpStatus, setHelpStatus] =
+    useState<string | null>(null);
+
+  const sendStaffHelp =
+    async () => {
+      const message =
+        helpMessage.trim();
+
+      if (
+        !message ||
+        helpSending
+      ) {
+        return;
+      }
+
+      setHelpSending(true);
+      setHelpStatus(null);
+
+      try {
+const result =
+  await window.isleOverlay.sendHelpAlert(
+    message,
+  );
+
+        if (
+          result &&
+          typeof result ===
+            "object" &&
+          "error" in result
+        ) {
+          throw new Error(
+            String(result.error),
+          );
+        }
+
+        setHelpStatus(
+          "Staff have been notified.",
+        );
+
+        setHelpMessage("");
+
+        setTimeout(() => {
+          setHelpOpen(false);
+          setHelpStatus(null);
+        }, 1200);
+      } catch (err) {
+        setHelpStatus(
+          err instanceof Error
+            ? err.message
+            : "Failed to send staff alert.",
+        );
+      } finally {
+        setHelpSending(false);
+      }
+    };
+
   const [mapEditAdmin, setMapEditAdmin] =
     useState(false);
 
@@ -1036,11 +1225,15 @@ export function MainWindow({
 
   const savedLayout =
     settings?.layout as
-      | Record<string, Pos | Size>
+      | Record<
+          string,
+          Pos | Size
+        >
       | null
       | undefined;
 
-  const saved = savedLayout?.["main"];
+  const saved =
+    savedLayout?.["main"];
 
   const savedPos =
     saved &&
@@ -1049,7 +1242,8 @@ export function MainWindow({
       ? {
           x: saved.x,
           y:
-            typeof saved.y === "number"
+            typeof saved.y ===
+            "number"
               ? saved.y
               : 70,
         }
@@ -1061,15 +1255,17 @@ export function MainWindow({
   const savedSize =
     saved &&
     "width" in saved &&
-    typeof saved.width === "number"
+    typeof saved.width ===
+      "number"
       ? {
           width: Math.max(
             MIN_SIZE.width,
             saved.width,
           ),
+
           height:
             typeof saved.height ===
-              "number"
+            "number"
               ? Math.max(
                   MIN_SIZE.height,
                   saved.height,
@@ -1099,12 +1295,14 @@ export function MainWindow({
     if (
       saved &&
       "x" in saved &&
-      typeof saved.x === "number"
+      typeof saved.x ===
+        "number"
     ) {
       setPos({
         x: saved.x,
         y:
-          typeof saved.y === "number"
+          typeof saved.y ===
+          "number"
             ? saved.y
             : 70,
       });
@@ -1113,16 +1311,18 @@ export function MainWindow({
     if (
       saved &&
       "width" in saved &&
-      typeof saved.width === "number"
+      typeof saved.width ===
+        "number"
     ) {
       setSize({
         width: Math.max(
           MIN_SIZE.width,
           saved.width,
         ),
+
         height:
           typeof saved.height ===
-            "number"
+          "number"
             ? Math.max(
                 MIN_SIZE.height,
                 saved.height,
@@ -1183,16 +1383,20 @@ export function MainWindow({
 
     void check();
 
-    const iv = setInterval(
-      check,
-      10000,
-    );
+    const iv =
+      setInterval(
+        check,
+        10000,
+      );
 
     return () => {
       alive = false;
       clearInterval(iv);
     };
-  }, [authed, me?.hasData]);
+  }, [
+    authed,
+    me?.hasData,
+  ]);
 
   useEffect(() => {
     if (!authed) {
@@ -1225,16 +1429,20 @@ export function MainWindow({
 
     void check();
 
-    const iv = setInterval(
-      check,
-      15000,
-    );
+    const iv =
+      setInterval(
+        check,
+        15000,
+      );
 
     return () => {
       alive = false;
       clearInterval(iv);
     };
-  }, [authed, me?.hasData]);
+  }, [
+    authed,
+    me?.hasData,
+  ]);
 
   useEffect(() => {
     if (
@@ -1257,17 +1465,23 @@ export function MainWindow({
   ]);
 
   useEffect(() => {
-    if (focusSupportSignal > 0) {
+    if (
+      focusSupportSignal > 0
+    ) {
       setTab("admin");
     }
-  }, [focusSupportSignal]);
+  }, [
+    focusSupportSignal,
+  ]);
 
   const availableTabs =
     TABS.filter(
       (t) =>
-        (t.key !== "mapedit" ||
+        (t.key !==
+          "mapedit" ||
           mapEditAdmin) &&
-        (t.key !== "admin" ||
+        (t.key !==
+          "admin" ||
           adminModeOn),
     );
 
@@ -1292,97 +1506,111 @@ export function MainWindow({
       });
   };
 
-const onDown = (
-  e: React.MouseEvent,
-) => {
-  const target = e.target as HTMLElement;
-
-  // Do not start dragging when clicking interactive controls.
-  if (
-    target.closest(
-      "button, select, input, textarea, a, .interactive-region",
-    )
-  ) {
-    return;
-  }
-
-  // Only allow dragging from the drag handle.
-  if (!target.closest(".dragHandle")) {
-    return;
-  }
-
-  e.preventDefault();
-
-  off.current = {
-    x: e.clientX - pos.x,
-    y: e.clientY - pos.y,
-  };
-
-  lockInteract();
-
-  const move = (
-    ev: MouseEvent,
+  const onDown = (
+    e: MouseEvent,
   ) => {
-    if (!off.current) return;
+    const target =
+      e.target as HTMLElement;
 
-    setPos({
-      x: Math.max(
-        0,
-        Math.min(
-          window.innerWidth - 160,
-          ev.clientX - off.current.x,
+    if (
+      target.closest(
+        "button, select, input, textarea, a, .interactive-region",
+      )
+    ) {
+      return;
+    }
+
+    if (
+      !target.closest(
+        ".dragHandle",
+      )
+    ) {
+      return;
+    }
+
+    e.preventDefault();
+
+    off.current = {
+      x:
+        e.clientX - pos.x,
+      y:
+        e.clientY - pos.y,
+    };
+
+    lockInteract();
+
+    const move = (
+      ev: globalThis.MouseEvent,
+    ) => {
+      if (!off.current)
+        return;
+
+      setPos({
+        x: Math.max(
+          0,
+          Math.min(
+            window.innerWidth -
+              160,
+            ev.clientX -
+              off.current.x,
+          ),
         ),
-      ),
 
-      y: Math.max(
-        0,
-        Math.min(
-          window.innerHeight - 46,
-          ev.clientY - off.current.y,
+        y: Math.max(
+          0,
+          Math.min(
+            window.innerHeight -
+              46,
+            ev.clientY -
+              off.current.y,
+          ),
         ),
-      ),
-    });
-  };
+      });
+    };
 
-  const up = () => {
-    window.removeEventListener(
+    const up = () => {
+      window.removeEventListener(
+        "mousemove",
+        move,
+      );
+
+      window.removeEventListener(
+        "mouseup",
+        up,
+      );
+
+      off.current = null;
+
+      unlockInteract();
+
+      setPos((cur) => {
+        saveLayout(
+          cur,
+          size,
+        );
+
+        return cur;
+      });
+    };
+
+    window.addEventListener(
       "mousemove",
       move,
     );
 
-    window.removeEventListener(
+    window.addEventListener(
       "mouseup",
       up,
     );
-
-    off.current = null;
-    unlockInteract();
-
-    setPos((cur) => {
-      saveLayout(cur, size);
-      return cur;
-    });
   };
-
-  window.addEventListener(
-    "mousemove",
-    move,
-  );
-
-  window.addEventListener(
-    "mouseup",
-    up,
-  );
-};
 
   /*
    * MAIN WINDOW RESIZE
    *
    * This is the ONLY resize handler.
-   * Do not add another onResizeDown.
    */
   const onResizeDown = (
-    e: React.MouseEvent,
+    e: MouseEvent,
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1397,30 +1625,37 @@ const onDown = (
     lockInteract();
 
     const move = (
-      ev: MouseEvent,
+      ev: globalThis.MouseEvent,
     ) => {
       const start =
         resizeStart.current;
 
-      if (!start) return;
+      if (!start)
+        return;
 
-      const nextWidth = Math.max(
-        MIN_SIZE.width,
-        Math.min(
-          window.innerWidth - pos.x,
-          start.width +
-            (ev.clientX - start.x),
-        ),
-      );
+      const nextWidth =
+        Math.max(
+          MIN_SIZE.width,
+          Math.min(
+            window.innerWidth -
+              pos.x,
+            start.width +
+              (ev.clientX -
+                start.x),
+          ),
+        );
 
-      const nextHeight = Math.max(
-        MIN_SIZE.height,
-        Math.min(
-          window.innerHeight - pos.y,
-          start.height +
-            (ev.clientY - start.y),
-        ),
-      );
+      const nextHeight =
+        Math.max(
+          MIN_SIZE.height,
+          Math.min(
+            window.innerHeight -
+              pos.y,
+            start.height +
+              (ev.clientY -
+                start.y),
+          ),
+        );
 
       setSize({
         width: nextWidth,
@@ -1439,11 +1674,17 @@ const onDown = (
         up,
       );
 
-      resizeStart.current = null;
+      resizeStart.current =
+        null;
+
       unlockInteract();
 
       setSize((cur) => {
-        saveLayout(pos, cur);
+        saveLayout(
+          pos,
+          cur,
+        );
+
         return cur;
       });
     };
@@ -1460,24 +1701,27 @@ const onDown = (
   };
 
   const holdInteract = () => {
-    if (!isInteractLocked()) {
+    if (
+      !isInteractLocked()
+    ) {
       void window.isleOverlay.setMouseIgnore(
         false,
       );
     }
   };
 
-  const statusText = me?.hasData
-    ? `${me.species ?? "Unknown"}${
-        me.growth != null
-          ? ` · ${Math.round(
-              me.growth * 100,
-            )}%`
-          : ""
-      }`
-    : authed
-      ? "not in game"
-      : "signed out";
+  const statusText =
+    me?.hasData
+      ? `${me.species ?? "Unknown"}${
+          me.growth != null
+            ? ` · ${Math.round(
+                me.growth * 100,
+              )}%`
+            : ""
+        }`
+      : authed
+        ? "not in game"
+        : "signed out";
 
   return (
     <div
@@ -1534,7 +1778,9 @@ const onDown = (
         <span className="topStatus">
           <span
             className={`liveDot ${
-              me?.hasData ? "on" : ""
+              me?.hasData
+                ? "on"
+                : ""
             }`}
           />
 
@@ -1549,7 +1795,8 @@ const onDown = (
                 : ""
             }`}
             title={`${ticketUnread} unread ticket ${
-              ticketUnread === 1
+              ticketUnread ===
+              1
                 ? "message"
                 : "messages"
             }`}
@@ -1564,6 +1811,25 @@ const onDown = (
             </span>
           </button>
         ) : null}
+
+        {/* STAFF HELP BUTTON */}
+        <button
+          className="staffHelpBtn interactive-region"
+          onClick={() => {
+            setHelpOpen(true);
+            setHelpStatus(null);
+          }}
+          title="Request staff assistance"
+          aria-label="Request staff assistance"
+        >
+          <span className="staffHelpIcon">
+            !
+          </span>
+
+          <span>
+            STAFF HELP
+          </span>
+        </button>
 
         <span className="topVer">
           v{__APP_VERSION__}
@@ -1644,9 +1910,10 @@ const onDown = (
           </div>
 
           <div className="gateSub">
-            Log in with Steam to load
-            your dino stats, garage,
-            skins and the live map.
+            Log in with Steam to
+            load your dino stats,
+            garage, skins and the
+            live map.
           </div>
 
           <button
@@ -1672,7 +1939,8 @@ const onDown = (
         </div>
       ) : (
         <div className="tabContent">
-          {tab === "profile" ? (
+          {tab ===
+          "profile" ? (
             <DashboardTab
               me={me}
               theme={theme}
@@ -1681,34 +1949,40 @@ const onDown = (
                 adminModeOn
               }
             />
-          ) : tab === "livemap" ? (
+          ) : tab ===
+            "livemap" ? (
             <LiveMapTab
               authed={authed}
               onLogin={onLogin}
             />
-          ) : tab === "skin" ? (
+          ) : tab ===
+            "skin" ? (
             <SkinEditorTab
               authed={authed}
               onLogin={onLogin}
             />
-          ) : tab === "garage" ? (
+          ) : tab ===
+            "garage" ? (
             <GarageTab
               authed={authed}
               onLogin={onLogin}
             />
-          ) : tab === "mapedit" &&
+          ) : tab ===
+              "mapedit" &&
             mapEditAdmin ? (
             <MapEditorTab
               authed={authed}
               onLogin={onLogin}
             />
-          ) : tab === "admin" &&
+          ) : tab ===
+              "admin" &&
             adminModeOn ? (
             <AdminTab
               authed={authed}
               onLogin={onLogin}
             />
-          ) : tab === "dinoshop" ? (
+          ) : tab ===
+            "dinoshop" ? (
             <DinoShopTab
               authed={authed}
               onLogin={onLogin}
@@ -1722,9 +1996,148 @@ const onDown = (
         </div>
       )}
 
+      {/* =========================================================
+          STAFF HELP MODAL
+          ========================================================= */}
+      {helpOpen ? (
+        <div
+          className="staffHelpOverlay interactive-region"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <div
+            className="staffHelpModal"
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <div className="staffHelpHeader">
+              <div className="staffHelpHeaderIcon">
+                !
+              </div>
+
+              <div>
+                <div className="staffHelpTitle">
+                  Request Staff Assistance
+                </div>
+
+                <div className="staffHelpSub">
+                  Send a message directly
+                  to the server staff.
+                </div>
+              </div>
+            </div>
+
+            <div className="staffHelpField">
+              <label
+                htmlFor="staff-help-message"
+                className="staffHelpLabel"
+              >
+                Message
+              </label>
+
+              <textarea
+                id="staff-help-message"
+                className="staffHelpInput"
+                value={
+                  helpMessage
+                }
+                onChange={(e) =>
+                  setHelpMessage(
+                    e.target.value,
+                  )
+                }
+                placeholder="Describe what you need help with..."
+                disabled={
+                  helpSending
+                }
+                autoFocus
+              />
+            </div>
+
+            {helpStatus ? (
+              <div
+                className={`staffHelpStatus ${
+                  helpStatus ===
+                  "Staff have been notified."
+                    ? "success"
+                    : "error"
+                }`}
+              >
+                {helpStatus}
+              </div>
+            ) : null}
+
+            <div className="staffHelpActions">
+              <button
+                className="staffHelpCancel interactive-region"
+                onClick={() => {
+                  if (
+                    helpSending
+                  ) {
+                    return;
+                  }
+
+                  setHelpOpen(
+                    false,
+                  );
+
+                  setHelpMessage(
+                    "",
+                  );
+
+                  setHelpStatus(
+                    null,
+                  );
+                }}
+                disabled={
+                  helpSending
+                }
+              >
+                Cancel
+              </button>
+
+              <button
+                className="staffHelpSend interactive-region"
+                onClick={() =>
+                  void sendStaffHelp()
+                }
+                disabled={
+                  helpSending ||
+                  !helpMessage.trim()
+                }
+              >
+                {helpSending ? (
+                  <>
+                    <span className="staffHelpSpinner" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <span className="staffHelpSendIcon">
+                      ✓
+                    </span>
+                    Notify Staff
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div
         className="resizeHandle"
-        onMouseDown={onResizeDown}
+        onMouseDown={
+          onResizeDown
+        }
         title="Resize dashboard"
         aria-label="Resize dashboard"
       >

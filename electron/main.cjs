@@ -14,7 +14,13 @@ const { autoUpdater } = require("electron-updater");
 const path = require("path");
 const fs = require("fs");
 
-app.setPath("userData", path.join(app.getPath("appData"), "isle-overlay"));
+app.setPath(
+  "userData",
+  path.join(
+    app.getPath("appData"),
+    "isle-overlay",
+  ),
+);
 
 let uio = null;
 
@@ -33,10 +39,14 @@ let uioStarted = false;
 let recordResolve = null;
 
 const SETTINGS_FILE = () =>
-  path.join(app.getPath("userData"), "isle-overlay.settings.json");
+  path.join(
+    app.getPath("userData"),
+    "isle-overlay.settings.json",
+  );
 
 const defaultTheme = {
   accent: "#7cf2a6",
+
   stat: {
     health: "#ff5a5a",
     stamina: "#ffcf4a",
@@ -46,9 +56,42 @@ const defaultTheme = {
 };
 
 const defaultSettings = {
-  apiBaseUrl: "https://islepilot.eu",
+  apiBaseUrl:
+    "https://islepilot.eu",
+
   steamId: null,
   overlayToken: null,
+
+  /*
+   * ============================================================
+   * DISCORD HELP SYSTEM
+   * ============================================================
+   *
+   * IMPORTANT:
+   * Replace the webhook below with your NEWLY regenerated
+   * Discord webhook.
+   *
+   * Do not share the webhook publicly.
+   */
+
+  discordHelpWebhook:
+    "https://discord.com/api/webhooks/1542579603644882965/icuMkKX2FeVq0skvASTgUVP3efNDmnTlfhMOPxl6m5CKDMCbvxVGy2eQHd4w705L9ptP",
+
+  /*
+   * Multiple Discord staff roles are supported.
+   *
+   * Every ID in this array will be mentioned when a player
+   * requests help.
+   */
+
+  discordStaffRoleIds: [
+    "1519779255532130454",
+    "1519780244154744962",
+    "1519780782246334655",
+    "1519781380819779604",
+    "1519782191033221321",
+    "1519782964030869656",
+  ],
 
   opacity: 1,
 
@@ -76,6 +119,7 @@ const defaultSettings = {
     enabled: true,
     threshold: 20,
     duration: 5,
+
     types: {
       health: true,
       hunger: true,
@@ -92,12 +136,18 @@ const defaultSettings = {
 };
 
 const isHex = (v) =>
-  typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v);
+  typeof v === "string" &&
+  /^#[0-9a-fA-F]{6}$/.test(v);
 
 const normalizeTheme = (t) => {
-  const src = t && typeof t === "object" ? t : {};
+  const src =
+    t && typeof t === "object"
+      ? t
+      : {};
+
   const st =
-    src.stat && typeof src.stat === "object"
+    src.stat &&
+    typeof src.stat === "object"
       ? src.stat
       : {};
 
@@ -127,78 +177,196 @@ const normalizeTheme = (t) => {
 };
 
 const asStringOrNull = (v) =>
-  typeof v === "string" && v.length > 0 ? v : null;
+  typeof v === "string" &&
+  v.length > 0
+    ? v
+    : null;
 
-const asString = (v, fallback) =>
-  typeof v === "string" && v.trim()
+const asString = (
+  v,
+  fallback,
+) =>
+  typeof v === "string" &&
+  v.trim()
     ? v.trim()
     : fallback;
 
-const normalizeSettings = (raw) => {
+/* ============================================================
+   DISCORD SETTINGS NORMALIZATION
+   ============================================================ */
+
+const normalizeDiscordRoleIds = (
+  value,
+) => {
+  if (!Array.isArray(value)) {
+    return [
+      ...defaultSettings.discordStaffRoleIds,
+    ];
+  }
+
+  return value
+    .filter(
+      (id) =>
+        typeof id === "string" &&
+        /^\d{17,20}$/.test(
+          id.trim(),
+        ),
+    )
+    .map((id) => id.trim())
+    .filter(
+      (id, index, arr) =>
+        arr.indexOf(id) === index,
+    );
+};
+
+const normalizeDiscordWebhook = (
+  value,
+) => {
+  if (
+    typeof value !== "string" ||
+    !value.trim()
+  ) {
+    return (
+      defaultSettings.discordHelpWebhook
+    );
+  }
+
+  const webhook =
+    value.trim();
+
+  /*
+   * Discord webhooks normally look like:
+   *
+   * https://discord.com/api/webhooks/ID/TOKEN
+   *
+   * Also allow discordapp.com for compatibility.
+   */
+
+  if (
+    !/^https:\/\/(?:discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/[\w\-]+$/i.test(
+      webhook,
+    )
+  ) {
+    return (
+      defaultSettings.discordHelpWebhook
+    );
+  }
+
+  return webhook;
+};
+
+const normalizeSettings = (
+  raw,
+) => {
   const s =
-    raw && typeof raw === "object"
+    raw &&
+    typeof raw === "object"
       ? raw
       : {};
 
   const steamIdRaw =
-    typeof s.steamId === "string"
+    typeof s.steamId ===
+    "string"
       ? s.steamId.trim()
       : "";
 
-  const smartNotifications = (() => {
-    const n =
-      s.smartNotifications &&
-      typeof s.smartNotifications === "object"
-        ? s.smartNotifications
-        : {};
+  const smartNotifications =
+    (() => {
+      const n =
+        s.smartNotifications &&
+        typeof s.smartNotifications ===
+          "object"
+          ? s.smartNotifications
+          : {};
 
-    const types =
-      n.types &&
-      typeof n.types === "object"
-        ? n.types
-        : {};
+      const types =
+        n.types &&
+        typeof n.types ===
+          "object"
+          ? n.types
+          : {};
 
-    return {
-      enabled: n.enabled !== false,
+      return {
+        enabled:
+          n.enabled !== false,
 
-      threshold:
-        typeof n.threshold === "number" &&
-        Number.isFinite(n.threshold)
-          ? Math.max(
-              5,
-              Math.min(
-                50,
-                Math.round(n.threshold),
-              ),
-            )
-          : 20,
+        threshold:
+          typeof n.threshold ===
+            "number" &&
+          Number.isFinite(
+            n.threshold,
+          )
+            ? Math.max(
+                5,
+                Math.min(
+                  50,
+                  Math.round(
+                    n.threshold,
+                  ),
+                ),
+              )
+            : 20,
 
-      duration:
-        typeof n.duration === "number" &&
-        Number.isFinite(n.duration)
-          ? Math.max(
-              2,
-              Math.min(
-                12,
-                Math.round(n.duration),
-              ),
-            )
-          : 5,
+        duration:
+          typeof n.duration ===
+            "number" &&
+          Number.isFinite(
+            n.duration,
+          )
+            ? Math.max(
+                2,
+                Math.min(
+                  12,
+                  Math.round(
+                    n.duration,
+                  ),
+                ),
+              )
+            : 5,
 
-      types: {
-        health: types.health !== false,
-        hunger: types.hunger !== false,
-        thirst: types.thirst !== false,
-        stamina: types.stamina !== false,
-        growth: types.growth !== false,
-        prime: types.prime !== false,
-        elder: types.elder !== false,
-        support: types.support !== false,
-        update: types.update !== false,
-        death: types.death !== false,
-      },
-    };
-  })();
+        types: {
+          health:
+            types.health !==
+            false,
+
+          hunger:
+            types.hunger !==
+            false,
+
+          thirst:
+            types.thirst !==
+            false,
+
+          stamina:
+            types.stamina !==
+            false,
+
+          growth:
+            types.growth !==
+            false,
+
+          prime:
+            types.prime !==
+            false,
+
+          elder:
+            types.elder !==
+            false,
+
+          support:
+            types.support !==
+            false,
+
+          update:
+            types.update !==
+            false,
+
+          death:
+            types.death !==
+            false,
+        },
+      };
+    })();
 
   return {
     apiBaseUrl: asString(
@@ -207,112 +375,171 @@ const normalizeSettings = (raw) => {
     ),
 
     steamId:
-      /^\d{17}$/.test(steamIdRaw)
+      /^\d{17}$/.test(
+        steamIdRaw,
+      )
         ? steamIdRaw
         : null,
 
-    overlayToken: asStringOrNull(
-      s.overlayToken,
-    ),
+    overlayToken:
+      asStringOrNull(
+        s.overlayToken,
+      ),
+
+    /*
+     * Discord help settings
+     */
+
+    discordHelpWebhook:
+      normalizeDiscordWebhook(
+        s.discordHelpWebhook,
+      ),
+
+    discordStaffRoleIds:
+      normalizeDiscordRoleIds(
+        s.discordStaffRoleIds,
+      ),
 
     opacity:
-      typeof s.opacity === "number" &&
-      Number.isFinite(s.opacity)
+      typeof s.opacity ===
+        "number" &&
+      Number.isFinite(
+        s.opacity,
+      )
         ? Math.max(
             0.3,
-            Math.min(1, s.opacity),
+            Math.min(
+              1,
+              s.opacity,
+            ),
           )
         : 1,
 
     layout:
       s.layout &&
-      typeof s.layout === "object"
+      typeof s.layout ===
+        "object"
         ? s.layout
         : null,
 
     panels:
       s.panels &&
-      typeof s.panels === "object"
+      typeof s.panels ===
+        "object"
         ? s.panels
         : null,
 
-    theme: normalizeTheme(s.theme),
+    theme:
+      normalizeTheme(
+        s.theme,
+      ),
 
     radarBounds:
       s.radarBounds &&
-      typeof s.radarBounds === "object"
+      typeof s.radarBounds ===
+        "object"
         ? s.radarBounds
         : null,
 
     radarSize:
-      typeof s.radarSize === "number" &&
-      Number.isFinite(s.radarSize)
+      typeof s.radarSize ===
+        "number" &&
+      Number.isFinite(
+        s.radarSize,
+      )
         ? Math.max(
             180,
             Math.min(
               560,
-              Math.round(s.radarSize),
+              Math.round(
+                s.radarSize,
+              ),
             ),
           )
         : 320,
 
     radarRange:
-      typeof s.radarRange === "number" &&
+      typeof s.radarRange ===
+        "number" &&
       s.radarRange >= 0 &&
       s.radarRange <= 3
-        ? Math.round(s.radarRange)
+        ? Math.round(
+            s.radarRange,
+          )
         : 1,
 
-    radarLabels: Boolean(
-      s.radarLabels,
-    ),
+    radarLabels:
+      Boolean(
+        s.radarLabels,
+      ),
 
-    radarOpen: Boolean(
-      s.radarOpen,
-    ),
+    radarOpen:
+      Boolean(
+        s.radarOpen,
+      ),
 
-    cursorEnabled: Boolean(
-      s.cursorEnabled,
-    ),
+    cursorEnabled:
+      Boolean(
+        s.cursorEnabled,
+      ),
 
     cursorKey:
-      typeof s.cursorKey === "string" &&
+      typeof s.cursorKey ===
+        "string" &&
       s.cursorKey
         ? s.cursorKey
         : "Insert",
 
     cursorMode:
-      s.cursorMode === "hold"
+      s.cursorMode ===
+      "hold"
         ? "hold"
         : "toggle",
 
     dashKey:
-      typeof s.dashKey === "string"
+      typeof s.dashKey ===
+        "string"
         ? s.dashKey
         : "F8",
 
-    streamerMode: Boolean(
-      s.streamerMode,
-    ),
+    streamerMode:
+      Boolean(
+        s.streamerMode,
+      ),
 
-    compatMode: Boolean(
-      s.compatMode,
-    ),
+    compatMode:
+      Boolean(
+        s.compatMode,
+      ),
 
     smartNotifications,
   };
 };
 
-const encryptToken = (plain) => {
-  if (!plain) return null;
+/* ============================================================
+   TOKEN ENCRYPTION
+   ============================================================ */
+
+const encryptToken = (
+  plain,
+) => {
+  if (!plain) {
+    return null;
+  }
 
   try {
-    if (safeStorage.isEncryptionAvailable()) {
+    if (
+      safeStorage.isEncryptionAvailable()
+    ) {
       return (
         "enc1:" +
         safeStorage
-          .encryptString(plain)
-          .toString("base64")
+          .encryptString(
+            plain,
+          )
+          .toString(
+            "base64",
+          )
       );
     }
   } catch {}
@@ -320,12 +547,19 @@ const encryptToken = (plain) => {
   return plain;
 };
 
-const decryptToken = (stored) => {
-  if (!stored) return null;
+const decryptToken = (
+  stored,
+) => {
+  if (!stored) {
+    return null;
+  }
 
   if (
-    typeof stored === "string" &&
-    stored.startsWith("enc1:")
+    typeof stored ===
+      "string" &&
+    stored.startsWith(
+      "enc1:",
+    )
   ) {
     try {
       return safeStorage.decryptString(
@@ -344,52 +578,73 @@ const decryptToken = (stored) => {
 
 const readSettings = () => {
   try {
-    const s = normalizeSettings(
-      JSON.parse(
-        fs.readFileSync(
-          SETTINGS_FILE(),
-          "utf8",
+    const s =
+      normalizeSettings(
+        JSON.parse(
+          fs.readFileSync(
+            SETTINGS_FILE(),
+            "utf8",
+          ),
         ),
-      ),
-    );
+      );
 
-    s.overlayToken = decryptToken(
-      s.overlayToken,
-    );
+    s.overlayToken =
+      decryptToken(
+        s.overlayToken,
+      );
 
     return s;
   } catch {
     return {
       ...defaultSettings,
+
       smartNotifications: {
         ...defaultSettings.smartNotifications,
+
         types: {
-          ...defaultSettings.smartNotifications.types,
+          ...defaultSettings
+            .smartNotifications
+            .types,
         },
       },
+
+      discordStaffRoleIds: [
+        ...defaultSettings.discordStaffRoleIds,
+      ],
     };
   }
 };
 
-const writeSettings = (patch) => {
-  const merged = normalizeSettings({
-    ...readSettings(),
-    ...(patch &&
-    typeof patch === "object"
-      ? patch
-      : {}),
-  });
+const writeSettings = (
+  patch,
+) => {
+  const merged =
+    normalizeSettings({
+      ...readSettings(),
+
+      ...(patch &&
+      typeof patch ===
+        "object"
+        ? patch
+        : {}),
+    });
 
   const onDisk = {
     ...merged,
-    overlayToken: encryptToken(
-      merged.overlayToken,
-    ),
+
+    overlayToken:
+      encryptToken(
+        merged.overlayToken,
+      ),
   };
 
   fs.mkdirSync(
-    path.dirname(SETTINGS_FILE()),
-    { recursive: true },
+    path.dirname(
+      SETTINGS_FILE(),
+    ),
+    {
+      recursive: true,
+    },
   );
 
   fs.writeFileSync(
@@ -405,7 +660,13 @@ const writeSettings = (patch) => {
   return merged;
 };
 
-if (readSettings().compatMode) {
+/* ============================================================
+   COMPATIBILITY
+   ============================================================ */
+
+if (
+  readSettings().compatMode
+) {
   app.commandLine.appendSwitch(
     "disable-direct-composition",
   );
@@ -418,80 +679,110 @@ if (readSettings().compatMode) {
 
 function baseApi() {
   return (
-    readSettings().apiBaseUrl ||
+    readSettings()
+      .apiBaseUrl ||
     defaultSettings.apiBaseUrl
-  ).replace(/\/+$/, "");
+  ).replace(
+    /\/+$/,
+    "",
+  );
 }
+
+/* ============================================================
+   WINDOWS / STATE
+   ============================================================ */
 
 let mainWindow = null;
 let gameBounds = null;
-let overlayFocusActive = false;
+let overlayFocusActive =
+  false;
 
 let lastUpdaterState = {
   state: "idle",
 };
 
-let updaterInitialized = false;
-let updaterChecking = false;
+let updaterInitialized =
+  false;
+
+let updaterChecking =
+  false;
 
 const bootGraceUntil =
   Date.now() + 4000;
 
-let streamerModeActive = false;
+let streamerModeActive =
+  false;
+
 let lastShowTs = 0;
 let lastTopmostTs = 0;
 
+/* ============================================================
+   MAIN WINDOW
+   ============================================================ */
+
 const createWindow = () => {
   streamerModeActive =
-    readSettings().streamerMode;
+    readSettings()
+      .streamerMode;
 
   const primary =
     screen.getPrimaryDisplay();
 
-  mainWindow = new BrowserWindow({
-    x: primary.bounds.x,
-    y: primary.bounds.y,
+  mainWindow =
+    new BrowserWindow({
+      x: primary.bounds.x,
+      y: primary.bounds.y,
 
-    width: primary.bounds.width,
-    height: primary.bounds.height,
+      width:
+        primary.bounds.width,
 
-    title:
-      "TheObsidianIsle Overlay",
+      height:
+        primary.bounds.height,
 
-    frame: false,
+      title:
+        "TheObsidianIsle Overlay",
 
-    transparent: true,
+      frame: false,
 
-    backgroundColor:
-      "#00000000",
+      transparent: true,
 
-    resizable: false,
-    movable: false,
-    minimizable: false,
-    maximizable: false,
+      backgroundColor:
+        "#00000000",
 
-    skipTaskbar:
-      !readSettings().streamerMode,
+      resizable: false,
+      movable: false,
+      minimizable: false,
+      maximizable: false,
 
-    hasShadow: false,
+      skipTaskbar:
+        !readSettings()
+          .streamerMode,
 
-    fullscreenable: false,
+      hasShadow: false,
 
-    focusable: true,
+      fullscreenable: false,
 
-    show: false,
+      focusable: true,
 
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      devTools: false,
-      backgroundThrottling: false,
-      preload: path.join(
-        __dirname,
-        "preload.cjs",
-      ),
-    },
-  });
+      show: false,
+
+      webPreferences: {
+        contextIsolation: true,
+
+        nodeIntegration: false,
+
+        devTools: false,
+
+        backgroundThrottling:
+          false,
+
+        preload:
+          path.join(
+            __dirname,
+            "preload.cjs",
+          ),
+      },
+    });
 
   mainWindow.setAlwaysOnTop(
     true,
@@ -500,22 +791,26 @@ const createWindow = () => {
 
   mainWindow.setIgnoreMouseEvents(
     true,
-    { forward: true },
+    {
+      forward: true,
+    },
   );
 
   mainWindow.setMenuBarVisibility(
     false,
   );
 
-  const distIndex = path.join(
-    __dirname,
-    "..",
-    "dist",
-    "index.html",
-  );
+  const distIndex =
+    path.join(
+      __dirname,
+      "..",
+      "dist",
+      "index.html",
+    );
 
   const devUrl =
-    process.env.VITE_DEV_SERVER_URL;
+    process.env
+      .VITE_DEV_SERVER_URL;
 
   if (
     !app.isPackaged &&
@@ -550,6 +845,10 @@ const createWindow = () => {
   );
 };
 
+/* ============================================================
+   RADAR
+   ============================================================ */
+
 let radarWindow = null;
 
 function openRadar() {
@@ -562,51 +861,70 @@ function openRadar() {
     return;
   }
 
-  const s = readSettings();
-  const b = s.radarBounds || null;
-  const sz = s.radarSize || 320;
+  const s =
+    readSettings();
 
-  radarWindow = new BrowserWindow({
-    width: b?.width ?? sz,
-    height: b?.height ?? sz,
-    x: b?.x,
-    y: b?.y,
+  const b =
+    s.radarBounds ||
+    null;
 
-    minWidth: 160,
-    minHeight: 160,
+  const sz =
+    s.radarSize ||
+    320;
 
-    frame: false,
-    transparent: true,
+  radarWindow =
+    new BrowserWindow({
+      width:
+        b?.width ?? sz,
 
-    backgroundColor:
-      "#00000000",
+      height:
+        b?.height ?? sz,
 
-    resizable: false,
-    movable: true,
+      x: b?.x,
+      y: b?.y,
 
-    minimizable: false,
-    maximizable: false,
+      minWidth: 160,
+      minHeight: 160,
 
-    skipTaskbar: true,
+      frame: false,
 
-    hasShadow: false,
+      transparent: true,
 
-    fullscreenable: false,
+      backgroundColor:
+        "#00000000",
 
-    show: false,
+      resizable: false,
 
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      backgroundThrottling: false,
-      devTools: false,
+      movable: true,
 
-      preload: path.join(
-        __dirname,
-        "preload.cjs",
-      ),
-    },
-  });
+      minimizable: false,
+      maximizable: false,
+
+      skipTaskbar: true,
+
+      hasShadow: false,
+
+      fullscreenable: false,
+
+      show: false,
+
+      webPreferences: {
+        contextIsolation: true,
+
+        nodeIntegration: false,
+
+        backgroundThrottling:
+          false,
+
+        devTools: false,
+
+        preload:
+          path.join(
+            __dirname,
+            "preload.cjs",
+          ),
+      },
+    });
 
   radarWindow.setAlwaysOnTop(
     true,
@@ -618,15 +936,17 @@ function openRadar() {
     false,
   );
 
-  const distIndex = path.join(
-    __dirname,
-    "..",
-    "dist",
-    "index.html",
-  );
+  const distIndex =
+    path.join(
+      __dirname,
+      "..",
+      "dist",
+      "index.html",
+    );
 
   const devUrl =
-    process.env.VITE_DEV_SERVER_URL;
+    process.env
+      .VITE_DEV_SERVER_URL;
 
   if (
     !app.isPackaged &&
@@ -638,7 +958,9 @@ function openRadar() {
   } else {
     void radarWindow.loadFile(
       distIndex,
-      { hash: "radar" },
+      {
+        hash: "radar",
+      },
     );
   }
 
@@ -654,17 +976,18 @@ function openRadar() {
     },
   );
 
-  const saveBounds = () => {
-    if (
-      radarWindow &&
-      !radarWindow.isDestroyed()
-    ) {
-      writeSettings({
-        radarBounds:
-          radarWindow.getBounds(),
-      });
-    }
-  };
+  const saveBounds =
+    () => {
+      if (
+        radarWindow &&
+        !radarWindow.isDestroyed()
+      ) {
+        writeSettings({
+          radarBounds:
+            radarWindow.getBounds(),
+        });
+      }
+    };
 
   radarWindow.on(
     "resize",
@@ -687,7 +1010,9 @@ function openRadar() {
       ) {
         mainWindow.webContents.send(
           "radar:changed",
-          { open: false },
+          {
+            open: false,
+          },
         );
       }
     },
@@ -699,7 +1024,9 @@ function openRadar() {
   ) {
     mainWindow.webContents.send(
       "radar:changed",
-      { open: true },
+      {
+        open: true,
+      },
     );
   }
 }
@@ -728,6 +1055,10 @@ function radarSend(
   }
 }
 
+/* ============================================================
+   CURSOR / INTERACTION
+   ============================================================ */
+
 function setCursor(on) {
   if (
     !mainWindow ||
@@ -740,11 +1071,15 @@ function setCursor(on) {
 
   mainWindow.setIgnoreMouseEvents(
     on ? false : true,
-    { forward: true },
+    {
+      forward: true,
+    },
   );
 
   if (on) {
-    if (!mainWindow.isVisible()) {
+    if (
+      !mainWindow.isVisible()
+    ) {
       mainWindow.showInactive();
     }
 
@@ -788,7 +1123,9 @@ function setCursor(on) {
 function toggleDash() {
   dashOn = !dashOn;
 
-  setCursor(dashOn);
+  setCursor(
+    dashOn,
+  );
 
   if (
     mainWindow &&
@@ -800,6 +1137,10 @@ function toggleDash() {
     );
   }
 }
+
+/* ============================================================
+   TRAY
+   ============================================================ */
 
 let tray = null;
 
@@ -821,6 +1162,7 @@ function createTray() {
         {
           label:
             "Show / hide dashboard",
+
           click: () =>
             toggleDash(),
         },
@@ -832,6 +1174,7 @@ function createTray() {
         {
           label:
             "Quit TheObsidianIsle Overlay",
+
           click: () =>
             app.quit(),
         },
@@ -840,14 +1183,21 @@ function createTray() {
 
     tray.on(
       "double-click",
-      () => toggleDash(),
+      () =>
+        toggleDash(),
     );
   } catch {
     tray = null;
   }
 }
 
-function keyNameForCode(code) {
+/* ============================================================
+   KEYBOARD
+   ============================================================ */
+
+function keyNameForCode(
+  code,
+) {
   if (!uio) {
     return String(code);
   }
@@ -858,7 +1208,8 @@ function keyNameForCode(code) {
     )
   ) {
     if (
-      uio.UiohookKey[name] === code
+      uio.UiohookKey[name] ===
+      code
     ) {
       return name;
     }
@@ -870,14 +1221,22 @@ function keyNameForCode(code) {
 function cursorCodeFrom(
   cursorKey,
 ) {
-  if (!uio || !cursorKey) {
+  if (
+    !uio ||
+    !cursorKey
+  ) {
     return null;
   }
 
   const named =
-    uio.UiohookKey[cursorKey];
+    uio.UiohookKey[
+      cursorKey
+    ];
 
-  if (typeof named === "number") {
+  if (
+    typeof named ===
+    "number"
+  ) {
     return named;
   }
 
@@ -891,9 +1250,12 @@ function cursorCodeFrom(
 }
 
 function currentCursorCode() {
-  const s = readSettings();
+  const s =
+    readSettings();
 
-  if (!s.cursorEnabled) {
+  if (
+    !s.cursorEnabled
+  ) {
     return null;
   }
 
@@ -922,7 +1284,8 @@ function startCursorHook() {
           );
 
         writeSettings({
-          [recordTarget]: name,
+          [recordTarget]:
+            name,
         });
 
         const r =
@@ -935,11 +1298,15 @@ function startCursorHook() {
         return;
       }
 
-      if (licenseBlocked) {
+      if (
+        licenseBlocked
+      ) {
         return;
       }
 
-      if (!overlayFocusActive) {
+      if (
+        !overlayFocusActive
+      ) {
         return;
       }
 
@@ -951,10 +1318,15 @@ function startCursorHook() {
 
       if (
         dashCode != null &&
-        e.keycode === dashCode
+        e.keycode ===
+          dashCode
       ) {
-        if (!dashKeyHeld) {
-          dashKeyHeld = true;
+        if (
+          !dashKeyHeld
+        ) {
+          dashKeyHeld =
+            true;
+
           toggleDash();
         }
 
@@ -971,11 +1343,14 @@ function startCursorHook() {
         return;
       }
 
-      if (cursorKeyHeld) {
+      if (
+        cursorKeyHeld
+      ) {
         return;
       }
 
-      cursorKeyHeld = true;
+      cursorKeyHeld =
+        true;
 
       if (
         readSettings()
@@ -984,7 +1359,9 @@ function startCursorHook() {
       ) {
         setCursor(true);
       } else {
-        setCursor(!cursorOn);
+        setCursor(
+          !cursorOn,
+        );
       }
     },
   );
@@ -1000,9 +1377,11 @@ function startCursorHook() {
 
       if (
         dashCode != null &&
-        e.keycode === dashCode
+        e.keycode ===
+          dashCode
       ) {
-        dashKeyHeld = false;
+        dashKeyHeld =
+          false;
       }
 
       const code =
@@ -1012,7 +1391,8 @@ function startCursorHook() {
         code != null &&
         e.keycode === code
       ) {
-        cursorKeyHeld = false;
+        cursorKeyHeld =
+          false;
 
         if (
           readSettings()
@@ -1030,20 +1410,30 @@ function startCursorHook() {
   } catch {}
 }
 
-function displayForBounds(b) {
+/* ============================================================
+   GAME WINDOW
+   ============================================================ */
+
+function displayForBounds(
+  b,
+) {
   if (!b) {
     return screen.getPrimaryDisplay();
   }
 
-  return screen.getDisplayNearestPoint({
-    x: Math.round(
-      b.x + b.width / 2,
-    ),
+  return screen.getDisplayNearestPoint(
+    {
+      x: Math.round(
+        b.x +
+          b.width / 2,
+      ),
 
-    y: Math.round(
-      b.y + b.height / 2,
-    ),
-  });
+      y: Math.round(
+        b.y +
+          b.height / 2,
+      ),
+    },
+  );
 }
 
 function positionOverlay() {
@@ -1065,10 +1455,14 @@ function positionOverlay() {
   if (
     cur.x !== wa.x ||
     cur.y !== wa.y ||
-    cur.width !== wa.width ||
-    cur.height !== wa.height
+    cur.width !==
+      wa.width ||
+    cur.height !==
+      wa.height
   ) {
-    mainWindow.setBounds(wa);
+    mainWindow.setBounds(
+      wa,
+    );
   }
 }
 
@@ -1102,19 +1496,25 @@ function trackGame() {
     return;
   }
 
-  const n = loadNw();
+  const n =
+    loadNw();
 
   if (!n) {
     return;
   }
 
-  let activeIsGame = false;
-  let activeIsOverlay = false;
+  let activeIsGame =
+    false;
+
+  let activeIsOverlay =
+    false;
 
   try {
     if (
       gameHwnd &&
-      !n.IsWindow(gameHwnd)
+      !n.IsWindow(
+        gameHwnd,
+      )
     ) {
       gameHwnd = null;
     }
@@ -1161,21 +1561,23 @@ function trackGame() {
     const fg =
       n.GetForegroundWindow();
 
-    activeIsGame = Boolean(
-      gameHwnd &&
-        fg &&
-        n.isSameWindow(
-          fg,
-          gameHwnd,
-        ),
-    );
+    activeIsGame =
+      Boolean(
+        gameHwnd &&
+          fg &&
+          n.isSameWindow(
+            fg,
+            gameHwnd,
+          ),
+      );
 
-    activeIsOverlay = Boolean(
-      fg &&
-        !activeIsGame &&
-        n.windowPid(fg) ===
-          process.pid,
-    );
+    activeIsOverlay =
+      Boolean(
+        fg &&
+          !activeIsGame &&
+          n.windowPid(fg) ===
+            process.pid,
+      );
   } catch {}
 
   const shouldShow =
@@ -1243,6 +1645,10 @@ function trackGame() {
   );
 }
 
+/* ============================================================
+   ISLEPILOT API
+   ============================================================ */
+
 async function apiFetch(
   method,
   pathname,
@@ -1278,7 +1684,9 @@ async function apiFetch(
       "application/json";
 
     init.body =
-      JSON.stringify(body);
+      JSON.stringify(
+        body,
+      );
   }
 
   try {
@@ -1384,6 +1792,300 @@ async function apiGetFile(
   }
 }
 
+/* ============================================================
+   DISCORD WEBHOOK HELP SYSTEM
+   ============================================================ */
+
+/*
+ * Sends a player help request directly to Discord.
+ *
+ * This deliberately does NOT use the IslePilot API.
+ *
+ * The renderer calls:
+ *
+ *   window.isleOverlay.discordHelp(...)
+ *
+ * through preload.cjs.
+ *
+ * Example payload:
+ *
+ * {
+ *   playerName: "DeadSigil",
+ *   message: "I am stuck near the swamp."
+ * }
+ */
+
+async function sendDiscordHelp(
+  playerName,
+  message,
+) {
+  const settings =
+    readSettings();
+
+  const webhook =
+    settings.discordHelpWebhook;
+
+  const roleIds =
+    settings.discordStaffRoleIds;
+
+  if (
+    !webhook ||
+    webhook ===
+      "PASTE_YOUR_NEW_DISCORD_WEBHOOK_HERE"
+  ) {
+    return {
+      ok: false,
+
+      error:
+        "Discord help webhook is not configured.",
+    };
+  }
+
+  if (
+    !Array.isArray(roleIds) ||
+    roleIds.length === 0
+  ) {
+    return {
+      ok: false,
+
+      error:
+        "No Discord staff roles are configured.",
+    };
+  }
+
+  const cleanPlayerName =
+    typeof playerName ===
+      "string"
+      ? playerName
+          .trim()
+          .slice(0, 100)
+      : "";
+
+  const cleanMessage =
+    typeof message ===
+      "string"
+      ? message
+          .trim()
+          .slice(0, 1800)
+      : "";
+
+  if (!cleanPlayerName) {
+    return {
+      ok: false,
+
+      error:
+        "Player name is required.",
+    };
+  }
+
+  if (!cleanMessage) {
+    return {
+      ok: false,
+
+      error:
+        "Help message is required.",
+    };
+  }
+
+  /*
+   * Ping every configured role.
+   */
+
+  const mentions =
+    roleIds
+      .map(
+        (id) =>
+          `<@&${id}>`,
+      )
+      .join(" ");
+
+  /*
+   * Discord message content.
+   *
+   * Example:
+   *
+   * @Staff @Admins
+   *
+   * 🆘 PLAYER HELP REQUEST
+   *
+   * Player: DeadSigil
+   *
+   * Message:
+   * I am stuck near the swamp.
+   */
+
+  const content =
+    [
+      mentions,
+
+      "",
+
+      "🆘 **PLAYER HELP REQUEST**",
+
+      "",
+
+      `**Player:** ${cleanPlayerName}`,
+
+      "",
+
+      `**Message:**\n${cleanMessage}`,
+    ].join("\n");
+
+  const payload = {
+    content,
+
+    allowed_mentions: {
+      roles: roleIds,
+      parse: [],
+    },
+
+    username:
+      "Obsidian Isle Support",
+
+    embeds: [
+      {
+        title:
+          "🆘 Player Help Request",
+
+        description:
+          cleanMessage,
+
+        fields: [
+          {
+            name:
+              "Player",
+
+            value:
+              cleanPlayerName,
+
+            inline: true,
+          },
+
+          {
+            name:
+              "Source",
+
+            value:
+              "TheObsidianIsle Overlay",
+
+            inline: true,
+          },
+        ],
+
+        footer: {
+          text:
+            "TheObsidianIsle Support System",
+        },
+
+        timestamp:
+          new Date().toISOString(),
+      },
+    ],
+  };
+
+  try {
+    const response =
+      await net.fetch(
+        webhook,
+        {
+          method:
+            "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Accept:
+              "application/json",
+          },
+
+          body:
+            JSON.stringify(
+              payload,
+            ),
+        },
+      );
+
+    if (
+      response.ok ||
+      response.status ===
+        204
+    ) {
+      console.log(
+        "[Discord] Help request sent successfully.",
+      );
+
+      return {
+        ok: true,
+      };
+    }
+
+    let errorBody =
+      "";
+
+    try {
+      errorBody =
+        await response.text();
+    } catch {}
+
+    console.error(
+      "[Discord] Webhook failed:",
+      response.status,
+      errorBody,
+    );
+
+    let friendly =
+      `Discord returned HTTP ${response.status}.`;
+
+    if (
+      response.status ===
+      401
+    ) {
+      friendly =
+        "Discord webhook is invalid or has been regenerated.";
+    } else if (
+      response.status ===
+      404
+    ) {
+      friendly =
+        "Discord webhook was not found. Check the webhook URL.";
+    } else if (
+      response.status ===
+      429
+    ) {
+      friendly =
+        "Discord rate limit reached. Please wait a moment and try again.";
+    }
+
+    return {
+      ok: false,
+
+      error:
+        friendly,
+
+      status:
+        response.status,
+    };
+  } catch (err) {
+    console.error(
+      "[Discord] Webhook request error:",
+      err,
+    );
+
+    return {
+      ok: false,
+
+      error:
+        err?.message ||
+        "Unable to connect to Discord.",
+    };
+  }
+}
+
+/* ============================================================
+   WEBSOCKET / LIVE
+   ============================================================ */
+
 const WebSocket =
   require("ws");
 
@@ -1414,13 +2116,16 @@ function scheduleLiveReconnect() {
     return;
   }
 
-  liveTimer = setTimeout(
-    () => {
-      liveTimer = null;
-      connectLive();
-    },
-    liveBackoff,
-  );
+  liveTimer =
+    setTimeout(
+      () => {
+        liveTimer = null;
+
+        connectLive();
+      },
+
+      liveBackoff,
+    );
 
   liveBackoff =
     Math.min(
@@ -1470,6 +2175,7 @@ async function sendOverlayHello(
       ws.send(
         JSON.stringify({
           t: "hello",
+
           name,
         }),
       );
@@ -1500,42 +2206,56 @@ function connectLive() {
   let ws;
 
   try {
-    ws = new WebSocket(
-      `${baseWs()}/ows`,
-      {
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
+    ws =
+      new WebSocket(
+        `${baseWs()}/ows`,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
         },
-      },
-    );
+      );
   } catch {
     scheduleLiveReconnect();
+
     return;
   }
 
   liveWs = ws;
 
-  ws.on("open", () => {
-    liveBackoff = 1000;
-    sendOverlayHello(
-      ws,
-      token,
-    );
-  });
+  ws.on(
+    "open",
+    () => {
+      liveBackoff =
+        1000;
+
+      sendOverlayHello(
+        ws,
+        token,
+      );
+    },
+  );
 
   ws.on(
     "message",
-    (raw, isBinary) => {
+    (
+      raw,
+      isBinary,
+    ) => {
       if (isBinary) {
         if (
           mainWindow &&
           !mainWindow.isDestroyed()
         ) {
           const buf =
-            Buffer.isBuffer(raw)
+            Buffer.isBuffer(
+              raw,
+            )
               ? raw
-              : Buffer.from(raw);
+              : Buffer.from(
+                  raw,
+                );
 
           mainWindow.webContents.send(
             "overlay:troll-audio",
@@ -1549,16 +2269,18 @@ function connectLive() {
       let frame;
 
       try {
-        frame = JSON.parse(
-          raw.toString(),
-        );
+        frame =
+          JSON.parse(
+            raw.toString(),
+          );
       } catch {
         return;
       }
 
       if (
         frame &&
-        frame.t === "live" &&
+        frame.t ===
+          "live" &&
         frame.d
       ) {
         if (
@@ -1577,7 +2299,8 @@ function connectLive() {
         );
       } else if (
         frame &&
-        frame.t === "troll"
+        frame.t ===
+          "troll"
       ) {
         if (
           mainWindow &&
@@ -1606,26 +2329,37 @@ function connectLive() {
     },
   );
 
-  ws.on("close", () => {
-    if (liveWs === ws) {
-      liveWs = null;
-    }
+  ws.on(
+    "close",
+    () => {
+      if (
+        liveWs === ws
+      ) {
+        liveWs = null;
+      }
 
-    scheduleLiveReconnect();
-  });
+      scheduleLiveReconnect();
+    },
+  );
 
-  ws.on("error", () => {
-    try {
-      ws.terminate();
-    } catch {}
-  });
+  ws.on(
+    "error",
+    () => {
+      try {
+        ws.terminate();
+      } catch {}
+    },
+  );
 }
 
 function stopLive() {
   liveStopped = true;
 
   if (liveTimer) {
-    clearTimeout(liveTimer);
+    clearTimeout(
+      liveTimer,
+    );
+
     liveTimer = null;
   }
 
@@ -1649,8 +2383,23 @@ ipcMain.handle(
     const s =
       readSettings();
 
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT send the Discord webhook to the renderer.
+     *
+     * The renderer doesn't need it because Discord requests
+     * are performed here in Electron's main process.
+     */
+
+    const {
+      discordHelpWebhook,
+      ...safeSettings
+    } = s;
+
     return {
-      ...s,
+      ...safeSettings,
+
       apiBaseUrl:
         baseApi(),
     };
@@ -1664,7 +2413,9 @@ ipcMain.handle(
       readSettings();
 
     const merged =
-      writeSettings(next);
+      writeSettings(
+        next,
+      );
 
     if (
       mainWindow &&
@@ -1697,11 +2448,24 @@ ipcMain.handle(
 
       mainWindow.webContents.send(
         "settings:changed",
-        merged,
+        {
+          ...merged,
+
+          /*
+           * Never send webhook to renderer.
+           */
+          discordHelpWebhook:
+            undefined,
+        },
       );
     }
 
-    return merged;
+    return {
+      ...merged,
+
+      discordHelpWebhook:
+        undefined,
+    };
   },
 );
 
@@ -1716,7 +2480,9 @@ ipcMain.handle(
 ipcMain.handle(
   "overlay:mouseIgnore",
   (_e, ignore) => {
-    if (cursorOn) return;
+    if (cursorOn) {
+      return;
+    }
 
     if (
       mainWindow &&
@@ -1724,7 +2490,9 @@ ipcMain.handle(
     ) {
       mainWindow.setIgnoreMouseEvents(
         Boolean(ignore),
-        { forward: true },
+        {
+          forward: true,
+        },
       );
     }
   },
@@ -1732,11 +2500,46 @@ ipcMain.handle(
 
 ipcMain.handle(
   "overlay:quit",
-  () => app.quit(),
+  () =>
+    app.quit(),
 );
 
 /* ============================================================
-   RADAR
+   DISCORD HELP IPC
+   ============================================================ */
+
+ipcMain.handle(
+  "discord:help",
+  async (
+    _e,
+    data,
+  ) => {
+    /*
+     * Only accept an object from the renderer.
+     */
+
+    if (
+      !data ||
+      typeof data !==
+        "object"
+    ) {
+      return {
+        ok: false,
+
+        error:
+          "Invalid help request.",
+      };
+    }
+
+    return sendDiscordHelp(
+      data.playerName,
+      data.message,
+    );
+  },
+);
+
+/* ============================================================
+   RADAR IPC
    ============================================================ */
 
 ipcMain.handle(
@@ -1749,7 +2552,8 @@ ipcMain.handle(
       closeRadar();
 
       writeSettings({
-        radarOpen: false,
+        radarOpen:
+          false,
       });
 
       return false;
@@ -1758,7 +2562,8 @@ ipcMain.handle(
     openRadar();
 
     writeSettings({
-      radarOpen: true,
+      radarOpen:
+        true,
     });
 
     return true;
@@ -1771,7 +2576,8 @@ ipcMain.handle(
     closeRadar();
 
     writeSettings({
-      radarOpen: false,
+      radarOpen:
+        false,
     });
   },
 );
@@ -1779,7 +2585,8 @@ ipcMain.handle(
 ipcMain.handle(
   "radar:isOpen",
   () =>
-    radarWindow != null &&
+    radarWindow !=
+      null &&
     !radarWindow.isDestroyed(),
 );
 
@@ -1800,20 +2607,33 @@ ipcMain.handle(
       !radarWindow.isDestroyed() &&
       b
     ) {
-      radarWindow.setBounds({
-        x: Math.round(b.x),
-        y: Math.round(b.y),
+      radarWindow.setBounds(
+        {
+          x: Math.round(
+            b.x,
+          ),
 
-        width: Math.max(
-          160,
-          Math.round(b.width),
-        ),
+          y: Math.round(
+            b.y,
+          ),
 
-        height: Math.max(
-          160,
-          Math.round(b.height),
-        ),
-      });
+          width:
+            Math.max(
+              160,
+              Math.round(
+                b.width,
+              ),
+            ),
+
+          height:
+            Math.max(
+              160,
+              Math.round(
+                b.height,
+              ),
+            ),
+        },
+      );
 
       writeSettings({
         radarBounds:
@@ -1835,12 +2655,14 @@ ipcMain.handle(
       liveWs.readyState ===
         WebSocket.OPEN &&
       state &&
-      typeof state === "object"
+      typeof state ===
+        "object"
     ) {
       try {
         liveWs.send(
           JSON.stringify({
             t: "liveskin",
+
             d: state,
           }),
         );
@@ -1853,7 +2675,9 @@ ipcMain.handle(
    KEY RECORDING
    ============================================================ */
 
-function recordKey(target) {
+function recordKey(
+  target,
+) {
   if (!uio) {
     return Promise.resolve(
       null,
@@ -1862,25 +2686,38 @@ function recordKey(target) {
 
   startCursorHook();
 
-  recordTarget = target;
+  recordTarget =
+    target;
 
   return new Promise(
     (resolve) => {
-      if (recordResolve) {
-        recordResolve(null);
+      if (
+        recordResolve
+      ) {
+        recordResolve(
+          null,
+        );
       }
 
-      recordResolve = resolve;
+      recordResolve =
+        resolve;
 
-      setTimeout(() => {
-        if (
-          recordResolve ===
-          resolve
-        ) {
-          recordResolve = null;
-          resolve(null);
-        }
-      }, 10000);
+      setTimeout(
+        () => {
+          if (
+            recordResolve ===
+            resolve
+          ) {
+            recordResolve =
+              null;
+
+            resolve(
+              null,
+            );
+          }
+        },
+        10000,
+      );
     },
   );
 }
@@ -1904,8 +2741,12 @@ ipcMain.handle(
 ipcMain.handle(
   "overlay:dashOpen",
   (_e, open) => {
-    dashOn = !!open;
-    setCursor(!!open);
+    dashOn =
+      !!open;
+
+    setCursor(
+      !!open,
+    );
   },
 );
 
@@ -1933,7 +2774,9 @@ ipcMain.handle(
       readSettings();
 
     return {
-      steamId: s.steamId,
+      steamId:
+        s.steamId,
+
       authed:
         Boolean(
           s.overlayToken,
@@ -1947,6 +2790,7 @@ ipcMain.handle(
   () => {
     writeSettings({
       steamId: null,
+
       overlayToken: null,
     });
 
@@ -1967,7 +2811,7 @@ ipcMain.handle(
 );
 
 /* ============================================================
-   API
+   API IPC
    ============================================================ */
 
 ipcMain.handle(
@@ -1975,7 +2819,9 @@ ipcMain.handle(
   (_e, pathname) =>
     apiFetch(
       "GET",
-      String(pathname),
+      String(
+        pathname,
+      ),
     ),
 );
 
@@ -1984,7 +2830,9 @@ ipcMain.handle(
   (_e, pathname, body) =>
     apiFetch(
       "POST",
-      String(pathname),
+      String(
+        pathname,
+      ),
       body ?? {},
     ),
 );
@@ -1993,7 +2841,9 @@ ipcMain.handle(
   "api:getfile",
   (_e, pathname) =>
     apiGetFile(
-      String(pathname),
+      String(
+        pathname,
+      ),
     ),
 );
 
@@ -2001,7 +2851,8 @@ ipcMain.handle(
    MAP EDITOR
    ============================================================ */
 
-let mapCatalogCache = null;
+let mapCatalogCache =
+  null;
 
 function readJsonArray(
   fileName,
@@ -2031,7 +2882,9 @@ function readJsonArray(
     ),
   ].filter(Boolean);
 
-  for (const dir of dirs) {
+  for (
+    const dir of dirs
+  ) {
     const file =
       path.join(
         dir,
@@ -2040,7 +2893,9 @@ function readJsonArray(
 
     try {
       if (
-        fs.existsSync(file)
+        fs.existsSync(
+          file,
+        )
       ) {
         const parsed =
           JSON.parse(
@@ -2051,7 +2906,9 @@ function readJsonArray(
           );
 
         if (
-          Array.isArray(parsed)
+          Array.isArray(
+            parsed,
+          )
         ) {
           return parsed;
         }
@@ -2065,7 +2922,9 @@ function readJsonArray(
 ipcMain.handle(
   "mapedit:getCatalog",
   () => {
-    if (mapCatalogCache) {
+    if (
+      mapCatalogCache
+    ) {
       return mapCatalogCache;
     }
 
@@ -2073,19 +2932,21 @@ ipcMain.handle(
       readJsonArray(
         "sm_files.json",
       )
-        .map((x) => ({
-          path:
-            typeof x?.path ===
-            "string"
-              ? x.path
-              : "",
+        .map(
+          (x) => ({
+            path:
+              typeof x?.path ===
+              "string"
+                ? x.path
+                : "",
 
-          name:
-            typeof x?.name ===
-            "string"
-              ? x.name
-              : "",
-        }))
+            name:
+              typeof x?.name ===
+              "string"
+                ? x.name
+                : "",
+          }),
+        )
         .filter(
           (x) =>
             x.path &&
@@ -2096,26 +2957,28 @@ ipcMain.handle(
       readJsonArray(
         "bp_files.json",
       )
-        .map((x) => ({
-          path:
-            typeof x?.path ===
-            "string"
-              ? x.path
-              : "",
+        .map(
+          (x) => ({
+            path:
+              typeof x?.path ===
+              "string"
+                ? x.path
+                : "",
 
-          name:
-            typeof x?.name ===
-            "string"
-              ? x.name
-              : "",
+            name:
+              typeof x?.name ===
+              "string"
+                ? x.name
+                : "",
 
-          category:
-            typeof x?.category ===
-              "string" &&
-            x.category
-              ? x.category
-              : "Uncategorized",
-        }))
+            category:
+              typeof x?.category ===
+                "string" &&
+              x.category
+                ? x.category
+                : "Uncategorized",
+          }),
+        )
         .filter(
           (x) =>
             x.path &&
@@ -2139,7 +3002,9 @@ ipcMain.handle(
 ipcMain.handle(
   "updater:restart",
   () => {
-    if (!app.isPackaged) {
+    if (
+      !app.isPackaged
+    ) {
       return false;
     }
 
@@ -2164,20 +3029,27 @@ ipcMain.handle(
 ipcMain.handle(
   "updater:check",
   async () => {
-    if (!app.isPackaged) {
+    if (
+      !app.isPackaged
+    ) {
       return false;
     }
 
-    if (!updaterInitialized) {
+    if (
+      !updaterInitialized
+    ) {
       initAutoUpdate();
     }
 
-    if (updaterChecking) {
+    if (
+      updaterChecking
+    ) {
       return false;
     }
 
     try {
-      updaterChecking = true;
+      updaterChecking =
+        true;
 
       await autoUpdater.checkForUpdates();
 
@@ -2190,6 +3062,7 @@ ipcMain.handle(
 
       lastUpdaterState = {
         state: "error",
+
         message:
           err?.message ||
           String(err),
@@ -2207,7 +3080,8 @@ ipcMain.handle(
 
       return false;
     } finally {
-      updaterChecking = false;
+      updaterChecking =
+        false;
     }
   },
 );
@@ -2248,7 +3122,8 @@ function handleDeepLink(
   rawUrl,
 ) {
   if (
-    typeof rawUrl !== "string" ||
+    typeof rawUrl !==
+      "string" ||
     rawUrl.indexOf(
       `${AUTH_PROTOCOL}://`,
     ) !== 0
@@ -2259,7 +3134,10 @@ function handleDeepLink(
   let parsed;
 
   try {
-    parsed = new URL(rawUrl);
+    parsed =
+      new URL(
+        rawUrl,
+      );
   } catch {
     return;
   }
@@ -2276,7 +3154,9 @@ function handleDeepLink(
 
   if (
     !sid ||
-    !/^\d{17}$/.test(sid)
+    !/^\d{17}$/.test(
+      sid,
+    )
   ) {
     return;
   }
@@ -2284,6 +3164,7 @@ function handleDeepLink(
   const saved =
     writeSettings({
       steamId: sid,
+
       overlayToken:
         token || null,
     });
@@ -2314,7 +3195,8 @@ function handleDeepLink(
    LICENSE
    ============================================================ */
 
-let licenseBlocked = false;
+let licenseBlocked =
+  false;
 
 function applyLicense() {
   if (
@@ -2406,7 +3288,9 @@ if (!gotLock) {
         );
 
       if (url) {
-        handleDeepLink(url);
+        handleDeepLink(
+          url,
+        );
       }
     },
   );
@@ -2414,58 +3298,65 @@ if (!gotLock) {
   app.on(
     "open-url",
     (_e, url) =>
-      handleDeepLink(url),
+      handleDeepLink(
+        url,
+      ),
   );
 
-  app.whenReady().then(() => {
-    createWindow();
+  app.whenReady().then(
+    () => {
+      createWindow();
 
-    createTray();
+      createTray();
 
-    const boot =
-      readSettings();
+      const boot =
+        readSettings();
 
-    mainWindow.setOpacity(
-      boot.opacity,
-    );
+      mainWindow.setOpacity(
+        boot.opacity,
+      );
 
-    connectLive();
+      connectLive();
 
-    startCursorHook();
+      startCursorHook();
 
-    initAutoUpdate();
+      initAutoUpdate();
 
-    void trackGame();
-
-    setInterval(() => {
       void trackGame();
-    }, 700);
 
-    void checkLicense();
-
-    setInterval(
-      () => {
-        void checkLicense();
-      },
-      5 * 60 * 1000,
-    );
-
-    const startUrl =
-      process.argv.find(
-        (a) =>
-          typeof a ===
-            "string" &&
-          a.indexOf(
-            `${AUTH_PROTOCOL}://`,
-          ) === 0,
+      setInterval(
+        () => {
+          void trackGame();
+        },
+        700,
       );
 
-    if (startUrl) {
-      handleDeepLink(
-        startUrl,
+      void checkLicense();
+
+      setInterval(
+        () => {
+          void checkLicense();
+        },
+        5 * 60 * 1000,
       );
-    }
-  });
+
+      const startUrl =
+        process.argv.find(
+          (a) =>
+            typeof a ===
+              "string" &&
+            a.indexOf(
+              `${AUTH_PROTOCOL}://`,
+            ) === 0,
+        );
+
+      if (startUrl) {
+        handleDeepLink(
+          startUrl,
+        );
+      }
+    },
+  );
 }
 
 app.on(
@@ -2509,15 +3400,20 @@ app.on(
    ============================================================ */
 
 function initAutoUpdate() {
-  if (updaterInitialized) {
+  if (
+    updaterInitialized
+  ) {
     return;
   }
 
-  updaterInitialized = true;
+  updaterInitialized =
+    true;
 
   if (!app.isPackaged) {
     lastUpdaterState = {
-      state: "development",
+      state:
+        "development",
+
       version:
         app.getVersion(),
     };
@@ -2534,7 +3430,9 @@ function initAutoUpdate() {
   );
 
   try {
-    autoUpdater.autoDownload = true;
+    autoUpdater.autoDownload =
+      true;
+
     autoUpdater.autoInstallOnAppQuit =
       true;
 
@@ -2547,7 +3445,9 @@ function initAutoUpdate() {
     autoUpdater.allowDowngrade =
       false;
 
-    const emit = (payload) => {
+    const emit = (
+      payload,
+    ) => {
       lastUpdaterState =
         payload;
 
@@ -2570,10 +3470,13 @@ function initAutoUpdate() {
     autoUpdater.on(
       "checking-for-update",
       () => {
-        updaterChecking = true;
+        updaterChecking =
+          true;
 
         emit({
-          state: "checking",
+          state:
+            "checking",
+
           version:
             app.getVersion(),
         });
@@ -2584,7 +3487,9 @@ function initAutoUpdate() {
       "update-available",
       (info) => {
         emit({
-          state: "available",
+          state:
+            "available",
+
           version:
             info?.version ||
             null,
@@ -2599,10 +3504,13 @@ function initAutoUpdate() {
     autoUpdater.on(
       "update-not-available",
       (info) => {
-        updaterChecking = false;
+        updaterChecking =
+          false;
 
         emit({
-          state: "none",
+          state:
+            "none",
+
           version:
             info?.version ||
             app.getVersion(),
@@ -2617,16 +3525,19 @@ function initAutoUpdate() {
           state:
             "downloading",
 
-          percent: Math.round(
-            progress.percent || 0,
-          ),
+          percent:
+            Math.round(
+              progress.percent ||
+                0,
+            ),
 
           transferred:
             progress.transferred ||
             0,
 
           total:
-            progress.total || 0,
+            progress.total ||
+            0,
 
           bytesPerSecond:
             progress.bytesPerSecond ||
@@ -2638,7 +3549,8 @@ function initAutoUpdate() {
     autoUpdater.on(
       "update-downloaded",
       (info) => {
-        updaterChecking = false;
+        updaterChecking =
+          false;
 
         emit({
           state:
@@ -2662,7 +3574,8 @@ function initAutoUpdate() {
     autoUpdater.on(
       "error",
       (err) => {
-        updaterChecking = false;
+        updaterChecking =
+          false;
 
         const message =
           err?.message ||
@@ -2674,7 +3587,9 @@ function initAutoUpdate() {
         );
 
         emit({
-          state: "error",
+          state:
+            "error",
+
           message,
         });
       },
@@ -2682,44 +3597,54 @@ function initAutoUpdate() {
 
     /*
      * Initial update check.
-     *
-     * Delay this slightly so Electron has
-     * finished creating the overlay window.
      */
 
-    setTimeout(() => {
-      if (!app.isPackaged) {
-        return;
-      }
+    setTimeout(
+      () => {
+        if (
+          !app.isPackaged
+        ) {
+          return;
+        }
 
-      if (updaterChecking) {
-        return;
-      }
+        if (
+          updaterChecking
+        ) {
+          return;
+        }
 
-      updaterChecking = true;
+        updaterChecking =
+          true;
 
-      console.log(
-        `[Updater] Checking for updates. Current version: ${app.getVersion()}`,
-      );
+        console.log(
+          `[Updater] Checking for updates. Current version: ${app.getVersion()}`,
+        );
 
-      autoUpdater
-        .checkForUpdates()
-        .catch((err) => {
-          updaterChecking = false;
+        autoUpdater
+          .checkForUpdates()
+          .catch(
+            (err) => {
+              updaterChecking =
+                false;
 
-          console.error(
-            "[Updater] Initial check failed:",
-            err,
+              console.error(
+                "[Updater] Initial check failed:",
+                err,
+              );
+
+              emit({
+                state:
+                  "error",
+
+                message:
+                  err?.message ||
+                  String(err),
+              });
+            },
           );
-
-          emit({
-            state: "error",
-            message:
-              err?.message ||
-              String(err),
-          });
-        });
-    }, 5000);
+      },
+      5000,
+    );
 
     /*
      * Check every 10 minutes.
@@ -2738,31 +3663,37 @@ function initAutoUpdate() {
           "[Updater] Scheduled update check.",
         );
 
-        updaterChecking = true;
+        updaterChecking =
+          true;
 
         autoUpdater
           .checkForUpdates()
-          .catch((err) => {
-            updaterChecking =
-              false;
+          .catch(
+            (err) => {
+              updaterChecking =
+                false;
 
-            console.error(
-              "[Updater] Scheduled check failed:",
-              err,
-            );
+              console.error(
+                "[Updater] Scheduled check failed:",
+                err,
+              );
 
-            emit({
-              state: "error",
-              message:
-                err?.message ||
-                String(err),
-            });
-          });
+              emit({
+                state:
+                  "error",
+
+                message:
+                  err?.message ||
+                  String(err),
+              });
+            },
+          );
       },
       10 * 60 * 1000,
     );
   } catch (err) {
-    updaterChecking = false;
+    updaterChecking =
+      false;
 
     console.error(
       "[Updater] Initialization failed:",
@@ -2770,7 +3701,9 @@ function initAutoUpdate() {
     );
 
     lastUpdaterState = {
-      state: "error",
+      state:
+        "error",
+
       message:
         err?.message ||
         String(err),
