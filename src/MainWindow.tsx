@@ -937,7 +937,16 @@ function PageDropdown({
   return (
     <div
       className="pageDropdown interactive-region"
-      onMouseDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+
+        // Make sure the overlay stays interactive
+        // while the native select is being used.
+        void window.isleOverlay.setMouseIgnore(false);
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
     >
       <svg
         className="pageDropdownIcon"
@@ -959,6 +968,13 @@ function PageDropdown({
         value={tab}
         onChange={(e) => {
           onChange(e.target.value as TabKey);
+        }}
+        onFocus={() => {
+          void window.isleOverlay.setMouseIgnore(false);
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          void window.isleOverlay.setMouseIgnore(false);
         }}
         aria-label="Select page"
       >
