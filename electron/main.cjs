@@ -67,22 +67,14 @@ const defaultSettings = {
    * DISCORD HELP SYSTEM
    * ============================================================
    *
-   * IMPORTANT:
-   * Replace the webhook below with your NEWLY regenerated
-   * Discord webhook.
+   * SECURITY:
+   * Do NOT store a real Discord webhook in source code.
    *
-   * Do not share the webhook publicly.
+   * Set the webhook using the application's settings file
+   * or your own secure configuration mechanism.
    */
 
-  discordHelpWebhook:
-    "https://discord.com/api/webhooks/1542579603644882965/icuMkKX2FeVq0skvASTgUVP3efNDmnTlfhMOPxl6m5CKDMCbvxVGy2eQHd4w705L9ptP",
-
-  /*
-   * Multiple Discord staff roles are supported.
-   *
-   * Every ID in this array will be mentioned when a player
-   * requests help.
-   */
+  discordHelpWebhook: "https://discord.com/api/webhooks/1542579603644882965/icuMkKX2FeVq0skvASTgUVP3efNDmnTlfhMOPxl6m5CKDMCbvxVGy2eQHd4w705L9ptP",
 
   discordStaffRoleIds: [
     "1519779255532130454",
@@ -226,30 +218,18 @@ const normalizeDiscordWebhook = (
     typeof value !== "string" ||
     !value.trim()
   ) {
-    return (
-      defaultSettings.discordHelpWebhook
-    );
+    return "";
   }
 
   const webhook =
     value.trim();
-
-  /*
-   * Discord webhooks normally look like:
-   *
-   * https://discord.com/api/webhooks/ID/TOKEN
-   *
-   * Also allow discordapp.com for compatibility.
-   */
 
   if (
     !/^https:\/\/(?:discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/[\w\-]+$/i.test(
       webhook,
     )
   ) {
-    return (
-      defaultSettings.discordHelpWebhook
-    );
+    return "";
   }
 
   return webhook;
@@ -385,10 +365,6 @@ const normalizeSettings = (
       asStringOrNull(
         s.overlayToken,
       ),
-
-    /*
-     * Discord help settings
-     */
 
     discordHelpWebhook:
       normalizeDiscordWebhook(
@@ -1483,7 +1459,7 @@ function loadNw() {
 }
 
 const GAME_WINDOW_RE =
-  /theisle|isle-win64/;
+  /theisle|isle-win64/i;
 
 let gameHwnd = null;
 let lastGameScanTs = 0;
@@ -1535,10 +1511,10 @@ function trackGame() {
             imagePath,
           ) =>
             GAME_WINDOW_RE.test(
-              imagePath,
+              imagePath || "",
             ) ||
             GAME_WINDOW_RE.test(
-              title,
+              title || "",
             ),
         );
     }
@@ -1796,24 +1772,81 @@ async function apiGetFile(
    DISCORD WEBHOOK HELP SYSTEM
    ============================================================ */
 
-/*
- * Sends a player help request directly to Discord.
- *
- * This deliberately does NOT use the IslePilot API.
- *
- * The renderer calls:
- *
- *   window.isleOverlay.discordHelp(...)
- *
- * through preload.cjs.
- *
- * Example payload:
- *
- * {
- *   playerName: "DeadSigil",
- *   message: "I am stuck near the swamp."
- * }
- */
+async function getDiscordPlayerName() {
+  const settings =
+    readSettings();
+
+  if (!settings.overlayToken) {
+    return null;
+  }
+
+  try {
+    const res =
+      await net.fetch(
+        `${baseApi()}/api/overlay/me`,
+        {
+          method: "GET",
+
+          headers: {
+            Authorization:
+              `Bearer ${settings.overlayToken}`,
+
+            Accept:
+              "application/json",
+          },
+        },
+      );
+
+    if (!res.ok) {
+      console.error(
+        "[Discord] Failed to get player identity:",
+        res.status,
+      );
+
+      return null;
+    }
+
+    const me =
+      await res
+        .json()
+        .catch(
+          () => null,
+        );
+
+    /*
+     * Steam-authenticated identity.
+     *
+     * personaName is preferred because this is the
+     * Steam display/persona name returned by IslePilot.
+     */
+
+    const name =
+      typeof me?.personaName ===
+        "string" &&
+      me.personaName.trim()
+        ? me.personaName.trim()
+        : typeof me?.displayName ===
+            "string" &&
+          me.displayName.trim()
+        ? me.displayName.trim()
+        : typeof me?.name ===
+            "string" &&
+          me.name.trim()
+        ? me.name.trim()
+        : null;
+
+    return name
+      ? name.slice(0, 100)
+      : null;
+  } catch (err) {
+    console.error(
+      "[Discord] Failed to retrieve player name:",
+      err,
+    );
+
+    return null;
+  }
+}
 
 async function sendDiscordHelp(
   playerName,
@@ -1822,44 +1855,46 @@ async function sendDiscordHelp(
   const settings =
     readSettings();
 
+  const roleIds =
+    Array.isArray(
+      settings.discordStaffRoleIds,
+    )
+      ? settings.discordStaffRoleIds
+      : [];
+
   const webhook =
     settings.discordHelpWebhook;
 
-  const roleIds =
-    settings.discordStaffRoleIds;
-
-  if (
-    !webhook ||
-    webhook ===
-      "PASTE_YOUR_NEW_DISCORD_WEBHOOK_HERE"
-  ) {
+  if (!webhook) {
     return {
       ok: false,
 
       error:
-        "Discord help webhook is not configured.",
+        "Discord help webhook has not been configured.",
     };
   }
 
-  if (
-    !Array.isArray(roleIds) ||
-    roleIds.length === 0
-  ) {
-    return {
-      ok: false,
+  /*
+   * Always attempt to obtain the authenticated Steam
+   * player name from IslePilot.
+   *
+   * The renderer-provided name is only a fallback.
+   */
 
-      error:
-        "No Discord staff roles are configured.",
-    };
-  }
+  const authenticatedPlayerName =
+    await getDiscordPlayerName();
+
+  const resolvedPlayerName =
+    authenticatedPlayerName ||
+    (
+      typeof playerName === "string"
+        ? playerName.trim()
+        : ""
+    );
 
   const cleanPlayerName =
-    typeof playerName ===
-      "string"
-      ? playerName
-          .trim()
-          .slice(0, 100)
-      : "";
+    resolvedPlayerName
+      .slice(0, 100);
 
   const cleanMessage =
     typeof message ===
@@ -1874,7 +1909,7 @@ async function sendDiscordHelp(
       ok: false,
 
       error:
-        "Player name is required.",
+        "Unable to determine your Steam player name.",
     };
   }
 
@@ -1888,7 +1923,7 @@ async function sendDiscordHelp(
   }
 
   /*
-   * Ping every configured role.
+   * Mention every configured staff role.
    */
 
   const mentions =
@@ -1898,21 +1933,6 @@ async function sendDiscordHelp(
           `<@&${id}>`,
       )
       .join(" ");
-
-  /*
-   * Discord message content.
-   *
-   * Example:
-   *
-   * @Staff @Admins
-   *
-   * 🆘 PLAYER HELP REQUEST
-   *
-   * Player: DeadSigil
-   *
-   * Message:
-   * I am stuck near the swamp.
-   */
 
   const content =
     [
@@ -1936,6 +1956,7 @@ async function sendDiscordHelp(
 
     allowed_mentions: {
       roles: roleIds,
+
       parse: [],
     },
 
@@ -2012,11 +2033,14 @@ async function sendDiscordHelp(
         204
     ) {
       console.log(
-        "[Discord] Help request sent successfully.",
+        `[Discord] Help request sent for ${cleanPlayerName}.`,
       );
 
       return {
         ok: true,
+
+        playerName:
+          cleanPlayerName,
       };
     }
 
@@ -2142,28 +2166,40 @@ async function sendOverlayHello(
 
   try {
     const res =
-      await fetch(
+      await net.fetch(
         `${baseApi()}/api/overlay/me`,
         {
+          method: "GET",
+
           headers: {
             Authorization:
               `Bearer ${token}`,
+
+            Accept:
+              "application/json",
           },
         },
       );
 
     if (res.ok) {
       const me =
-        await res.json();
+        await res
+          .json()
+          .catch(
+            () => null,
+          );
 
       name =
         typeof me?.personaName ===
         "string"
           ? me.personaName
-          : typeof me?.name ===
+          : typeof me?.displayName ===
               "string"
-            ? me.name
-            : "";
+            ? me.displayName
+            : typeof me?.name ===
+                "string"
+              ? me.name
+              : "";
     }
   } catch {}
 
@@ -2230,7 +2266,7 @@ function connectLive() {
       liveBackoff =
         1000;
 
-      sendOverlayHello(
+      void sendOverlayHello(
         ws,
         token,
       );
@@ -2384,12 +2420,7 @@ ipcMain.handle(
       readSettings();
 
     /*
-     * IMPORTANT:
-     *
-     * Do NOT send the Discord webhook to the renderer.
-     *
-     * The renderer doesn't need it because Discord requests
-     * are performed here in Electron's main process.
+     * Never expose the Discord webhook to the renderer.
      */
 
     const {
@@ -2451,9 +2482,6 @@ ipcMain.handle(
         {
           ...merged,
 
-          /*
-           * Never send webhook to renderer.
-           */
           discordHelpWebhook:
             undefined,
         },
@@ -2514,10 +2542,6 @@ ipcMain.handle(
     _e,
     data,
   ) => {
-    /*
-     * Only accept an object from the renderer.
-     */
-
     if (
       !data ||
       typeof data !==
@@ -2996,7 +3020,6 @@ ipcMain.handle(
 
 /* ============================================================
    AUTO UPDATER
-   v0.3.7
    ============================================================ */
 
 ipcMain.handle(
@@ -3240,11 +3263,14 @@ async function checkLicense() {
       );
 
     const res =
-      await fetch(
+      await net.fetch(
         `${base}/cdn/launcher/status.yml`,
         {
-          cache:
-            "no-store",
+          method: "GET",
+          headers: {
+            Accept:
+              "text/plain",
+          },
         },
       );
 
@@ -3316,6 +3342,15 @@ if (!gotLock) {
         boot.opacity,
       );
 
+      /*
+       * Restore radar if it was open before the
+       * application was closed.
+       */
+
+      if (boot.radarOpen) {
+        openRadar();
+      }
+
       connectLive();
 
       startCursorHook();
@@ -3372,12 +3407,13 @@ app.on(
     } catch {}
 
     try {
-      if (liveTimer) {
-        clearTimeout(
-          liveTimer,
-        );
+      stopLive();
+    } catch {}
 
-        liveTimer = null;
+    try {
+      if (tray) {
+        tray.destroy();
+        tray = null;
       }
     } catch {}
   },
@@ -3560,14 +3596,6 @@ function initAutoUpdate() {
             info?.version ||
             null,
         });
-
-        /*
-         * Do NOT immediately force-install here.
-         *
-         * The renderer can display the update
-         * notification and call updater:restart
-         * when appropriate.
-         */
       },
     );
 
@@ -3594,10 +3622,6 @@ function initAutoUpdate() {
         });
       },
     );
-
-    /*
-     * Initial update check.
-     */
 
     setTimeout(
       () => {
@@ -3645,10 +3669,6 @@ function initAutoUpdate() {
       },
       5000,
     );
-
-    /*
-     * Check every 10 minutes.
-     */
 
     setInterval(
       () => {

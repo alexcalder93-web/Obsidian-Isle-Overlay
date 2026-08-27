@@ -89,11 +89,14 @@ contextBridge.exposeInMainWorld("isleOverlay", {
    *   discord:helpAlert
    */
 
-  sendHelpAlert: (message) =>
-    ipcRenderer.invoke(
-      "discord:help",
+sendHelpAlert: (playerName, message) =>
+  ipcRenderer.invoke(
+    "discord:help",
+    {
+      playerName,
       message,
-    ),
+    },
+  ),
 
   getMapCatalog: () =>
     ipcRenderer.invoke(

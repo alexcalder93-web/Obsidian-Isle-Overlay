@@ -1150,8 +1150,11 @@ export function MainWindow({
     useState<TabKey>("profile");
 
   /*
+   * =========================================================
    * STAFF HELP
+   * =========================================================
    */
+
   const [helpOpen, setHelpOpen] =
     useState(false);
 
@@ -1163,6 +1166,16 @@ export function MainWindow({
 
   const [helpStatus, setHelpStatus] =
     useState<string | null>(null);
+
+  /*
+   * Use the authenticated player's actual name.
+   *
+   * Fallbacks prevent an empty player name from being sent
+   * if the API temporarily has no player data.
+   */
+  const playerName =
+    me?.name?.trim() ||
+    "Unknown Player";
 
   const sendStaffHelp =
     async () => {
@@ -1176,23 +1189,27 @@ export function MainWindow({
         return;
       }
 
+      if (!authed) {
+        setHelpStatus(
+          "You must be signed in to request staff assistance.",
+        );
+        return;
+      }
+
       setHelpSending(true);
       setHelpStatus(null);
 
       try {
-const result =
-  await window.isleOverlay.sendHelpAlert(
-    message,
-  );
+        const result =
+          await window.isleOverlay.sendHelpAlert(
+            playerName,
+            message,
+          );
 
-        if (
-          result &&
-          typeof result ===
-            "object" &&
-          "error" in result
-        ) {
+        if (!result?.ok) {
           throw new Error(
-            String(result.error),
+            result?.error ||
+              "Failed to send staff alert.",
           );
         }
 
@@ -1606,9 +1623,8 @@ const result =
 
   /*
    * MAIN WINDOW RESIZE
-   *
-   * This is the ONLY resize handler.
    */
+
   const onResizeDown = (
     e: MouseEvent,
   ) => {
@@ -1812,7 +1828,6 @@ const result =
           </button>
         ) : null}
 
-        {/* STAFF HELP BUTTON */}
         <button
           className="staffHelpBtn interactive-region"
           onClick={() => {
@@ -1999,6 +2014,7 @@ const result =
       {/* =========================================================
           STAFF HELP MODAL
           ========================================================= */}
+
       {helpOpen ? (
         <div
           className="staffHelpOverlay interactive-region"
