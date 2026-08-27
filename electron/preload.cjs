@@ -91,7 +91,7 @@ contextBridge.exposeInMainWorld("isleOverlay", {
 
   sendHelpAlert: (message) =>
     ipcRenderer.invoke(
-      "discord:helpAlert",
+      "discord:help",
       message,
     ),
 
